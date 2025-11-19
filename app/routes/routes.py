@@ -4,4 +4,4 @@ routes_bp = Blueprint('routes', __name__)
 
 @routes_bp.get("/test")
 def test():
-    return {"message": "Ruta funcionando!"}
+    return {"message": "COnfrimaaaaa bebe!"}
