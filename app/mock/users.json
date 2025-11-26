@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "nombre": "Joseph Balcazar",
+    "email": "joseph@example.com",
+    "rol": "participante"
+  },
+  {
+    "id": 2,
+    "nombre": "Joseph Balcazar",
+    "email": "joseph@example.com",
+    "rol": "participante"
+  },
+  {
+    "id": 3,
+    "nombre": "Joseph Balcazar",
+    "email": "joseph@example.com",
+    "rol": "participante"
+  },
+  {
+    "id": 4,
+    "nombre": "Cristian Ajila",
+    "email": "cristian@example.com",
+    "rol": "docente"
+  },
+  {
+    "id": 5,
+    "nombre": "Elias Poma",
+    "email": "elias@example.com",
+    "rol": "pasante"
+  },
+  {
+    "id": 6,
+    "nombre": "Santiago Abrigo",
+    "email": "santiago@example.com",
+    "rol": "administrativo"
+  }
+]

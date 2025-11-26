@@ -1,18 +1,10 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from app.config.config import Config
-from app.routes.routes import routes_bp
+from app import create_app
 
-app = Flask(__name__)
-app.config.from_object(Config)
-
-db = SQLAlchemy(app)
-
-app.register_blueprint(routes_bp)
+app = create_app()
 
 @app.route("/")
 def home():
-    return "API Flask - Kallpa Backendd"
+    return "API Flask - Kallpa Backend"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
