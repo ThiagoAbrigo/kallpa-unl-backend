@@ -5,10 +5,8 @@ from app.config.config import Config
 db = SQLAlchemy()
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=False)
     app.config.from_object(Config)
-
-    # Inicializar BD
     db.init_app(app)
     
     # Inicializar Marshmallow
