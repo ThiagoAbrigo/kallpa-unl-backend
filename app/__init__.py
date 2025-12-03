@@ -10,6 +10,10 @@ def create_app():
 
     # Inicializar BD
     db.init_app(app)
+    
+    # Inicializar Marshmallow
+    from app.schemas import ma
+    ma.init_app(app)
 
     # Registrar blueprints
     from app.routes.user_routes import user_bp
