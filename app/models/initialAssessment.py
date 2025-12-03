@@ -1,7 +1,7 @@
 from app.models.assessment import Assessment
 from app import db
 
-class AerobicAssessment(Assessment):
+class InitialAssessment(Assessment):
     __tablename__ = 'aerobic_assessment'
     id = db.Column(db.Integer, primary_key=True)
     testCooperDistancia = db.Column(db.Integer)

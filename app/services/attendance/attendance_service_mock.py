@@ -7,7 +7,6 @@ class AttendanceServiceMock:
         base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         self.mock_path = os.path.join(base, "mock", "attendance.json")
 
-        # Crear archivo si no existe
         if not os.path.exists(self.mock_path):
             with open(self.mock_path, "w", encoding="utf-8") as f:
                 json.dump([], f, indent=4)

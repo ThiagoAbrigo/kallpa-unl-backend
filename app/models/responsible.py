@@ -1,6 +1,5 @@
 
 from app import db      
-#La clase responsable se relaciona con participante Responsable 0..* a 0..1 Participante
 
 class Responsible(db.Model):
     __tablename__ = "responsible"
@@ -19,7 +18,7 @@ class Responsible(db.Model):
 
     def autenticar(self, dni):
         return self.dni == dni
-    
+        
     def cerrarSesion(self):
         pass
     
