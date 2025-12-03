@@ -10,6 +10,12 @@ class Assessment(db.Model):
     imc = db.Column(db.Float, nullable=False)
     perimetroCintura = db.Column(db.Float, nullable=False)
     envergadura = db.Column(db.Float, nullable=False)
+    type = db.Column(db.String(50))
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'assessment',
+        'polymorphic_on': type
+    }
 
     def calcularIMC(self):
         if self.talla > 0:

@@ -1,13 +1,17 @@
 from app.models.assessment import Assessment
 from app import db
 
-class AerobicAssessment(Assessment):
-    __tablename__ = 'aerobic_assessment'
-    id = db.Column(db.Integer, primary_key=True)
+class InitialAssessment(Assessment):
+    __tablename__ = 'initial_assessment'
+    id = db.Column(db.Integer, db.ForeignKey('assessment.id'), primary_key=True)
     testCooperDistancia = db.Column(db.Integer)
     testNavetteNivel = db.Column(db.Integer)
     frecuenciaCardiacaReposo = db.Column(db.Integer)
     frecuenciaCardiacaPostEjercicio = db.Column(db.Integer)
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'initial_assessment',
+    }
     def guardarResultadosAerobicos(self):
         db.session.add(self)
         db.session.commit()
