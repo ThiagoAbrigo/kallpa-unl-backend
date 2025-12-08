@@ -1,7 +1,7 @@
 from app import db
 
-class Participante(db.Model):
-    __tablename__ = "participante"
+class Participant(db.Model):
+    __tablename__ = "participant"
 
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)

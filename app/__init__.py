@@ -10,10 +10,7 @@ def create_app():
     db.init_app(app)
     
     with app.app_context():
-        # Import models here to ensure they are registered with SQLAlchemy
-        from app.models import attendance, participant, program, responsible, schedule
-        from app.models import assessment, initialAssessment, aerobicAssessment, periodicTest
-        
+        from app import models
         db.create_all()
         
         # Register blueprints

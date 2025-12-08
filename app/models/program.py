@@ -2,8 +2,8 @@
 
 from app import db
 
-class Programa(db.Model):
-    __tablename__ = "programa"
+class Program(db.Model):
+    __tablename__ = "program"
 
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)

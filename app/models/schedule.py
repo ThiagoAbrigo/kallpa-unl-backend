@@ -1,7 +1,7 @@
 from app import db
 
-class Horario(db.Model):
-    __tablename__ = "horario"
+class Schedule(db.Model):
+    __tablename__ = "schedule"
 
     id = db.Column(db.Integer, primary_key=True)
     programa_id = db.Column(db.Integer, db.ForeignKey('programa.id'), nullable=False)
