@@ -5,11 +5,14 @@ class PeriodicTest(Assessment):
     __tablename__ = "periodic_test"
 
     id = db.Column(db.Integer, db.ForeignKey('assessment.id'), primary_key=True)
+    external_id = db.Column(db.String(100), nullable=True)
     burpees = db.Column(db.Integer, nullable=False)
-    sentadillas = db.Column(db.Integer, nullable=False)
-    saltoVertical = db.Column(db.Integer, nullable=False)
-    plancha = db.Column(db.Integer, nullable=False)
-    dominadas = db.Column(db.Integer, nullable=False)
+    squats = db.Column(db.Integer, nullable=False)
+    vertical_jump = db.Column(db.Integer, nullable=False)
+    plank = db.Column(db.Integer, nullable=False)
+    pull_ups = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
     
     __mapper_args__ = {
         'polymorphic_identity': 'periodic_test',

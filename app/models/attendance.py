@@ -4,11 +4,14 @@ class Attendance(db.Model):
     __tablename__ = "attendance"
 
     id = db.Column(db.Integer, primary_key=True)
-    participant_id = db.Column(db.Integer, db.ForeignKey('participante.id'), nullable=False)
-    fecha = db.Column(db.String(50), nullable=False)
-    estado = db.Column(db.String(20), nullable=False)
+    external_id = db.Column(db.String(100), nullable=True)
+    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
+    date = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(20), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
     
-    class Estado:
-        PRESENTE = "presente"
-        AUSENTE = "ausente"
+    class Status:
+        PRESENT = "present"
+        ABSENT = "absent"
 

@@ -1,30 +1,33 @@
 
 from app import db      
-#La clase responsable se relaciona con participante Responsable 0..* a 0..1 Participante
+#The Responsible class relates to Participant Responsible 0..* to 0..1 Participant
 
 class Responsible(db.Model):
     __tablename__ = "responsible"
 
 
     id = db.Column(db.Integer, primary_key=True)
-    participante_id = db.Column(db.Integer, db.ForeignKey('participante.id'))
-    participante = db.relationship('Participante', backref=db.backref('responsables', lazy=True))
-    nombre = db.Column(db.String(100), nullable=False)
+    external_id = db.Column(db.String(100), nullable=True)
+    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'))
+    participant = db.relationship('Participant', backref=db.backref('responsibles', lazy=True))
+    name = db.Column(db.String(100), nullable=False)
     dni = db.Column(db.String(20), unique=True, nullable=False)
-    telefono = db.Column(db.String(20), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
 
     def __repr__(self):
-        return f"<Responsible {self.nombre}>"
+        return f"<Responsible {self.name}>"
     
 
-    def autenticar(self, dni):
+    def authenticate(self, dni):
         return self.dni == dni
     
-    def cerrarSesion(self):
+    def logout(self):
         pass
     
-    def recuperarContraseña(self):
+    def recoverPassword(self):
         pass
     
-    def editarPerfil(self):
+    def editProfile(self):
         pass    
