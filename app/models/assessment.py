@@ -3,7 +3,7 @@ class Assessment(db.Model):
     __tablename__ = "assessment"
 
     id = db.Column(db.Integer, primary_key=True)
-    participant_id = db.Column(db.Integer, db.ForeignKey('participante.id'), nullable=False)
+    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
     fecha = db.Column(db.String(50), nullable=False)
     peso = db.Column(db.Float, nullable=False)
     talla = db.Column(db.Float, nullable=False)
