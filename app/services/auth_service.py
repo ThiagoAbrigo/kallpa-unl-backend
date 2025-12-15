@@ -10,9 +10,9 @@ class AuthService:
         email = data.get("email")
         password = data.get("password")
 
-        # =================================================================
-        # 🟢 BYPASS DE EMERGENCIA (Para desarrollo sin Docker)
-        # =================================================================
+       
+        # BYPASS DE EMERGENCIA (Para desarrollo sin Docker)
+      
         if email == "dev@kallpa.com":
             user_data = {
                 "id": 1,
@@ -31,7 +31,7 @@ class AuthService:
                 "user": user_data,
                 "origen": "local_bypass"
             }, 200
-        # =================================================================
+       
 
         # Lógica normal para conectar con Docker
         try:

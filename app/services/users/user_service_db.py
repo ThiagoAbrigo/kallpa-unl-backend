@@ -77,3 +77,39 @@ class UserServiceDB:
 
         except Exception as e:
             return {"status": "error", "msg": f"Error en registro: {str(e)}"}, 400
+
+    def change_status(self, user_id, nuevo_estado):
+        """RF010: Cambiar estado (Activar/Inactivar)"""
+        try:
+            # Validar que el estado sea válido
+            if nuevo_estado not in ["ACTIVO", "INACTIVO"]:
+                return {"status": "error", "msg": "Estado inválido. Use ACTIVO o INACTIVO"}, 400
+
+            # Usamos el método update del DAO
+            usuario = self.dao.update(user_id, estado=nuevo_estado)
+            
+            if not usuario:
+                return {"status": "error", "msg": "Usuario no encontrado"}, 404
+
+            return {
+                "status": "ok",
+                "msg": f"Estado actualizado a {nuevo_estado}",
+                "data": participant_schema.dump(usuario)
+            }, 200
+        except Exception as e:
+            return {"status": "error", "msg": str(e)}, 500
+
+    def search_by_dni(self, dni):
+        """RF011: Buscar por DNI"""
+        try:
+            usuario = self.dao.get_by_dni(dni)
+            
+            if not usuario:
+                return {"status": "error", "msg": "Participante no encontrado"}, 404
+                
+            return {
+                "status": "ok",
+                "data": participant_schema.dump(usuario)
+            }, 200
+        except Exception as e:
+            return {"status": "error", "msg": str(e)}, 500

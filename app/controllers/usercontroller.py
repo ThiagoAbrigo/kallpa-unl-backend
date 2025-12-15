@@ -11,3 +11,12 @@ class UserController:
 
     def create_initiation(self, data):
         return user_service.create_initiation_participant(data)
+
+    def update_status(self, user_id, data):
+        nuevo_estado = data.get('estado')
+        if not nuevo_estado:
+            return {"status": "error", "msg": "Falta el campo 'estado'"}, 400
+        return user_service.change_status(user_id, nuevo_estado)
+
+    def search_user(self, dni):
+        return user_service.search_by_dni(dni)

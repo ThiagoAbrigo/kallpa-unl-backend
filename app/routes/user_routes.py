@@ -22,3 +22,16 @@ def crear_iniciacion():
     data = request.json
     response, status = controller.create_initiation(data)
     return jsonify(response), status
+
+
+@user_bp.route("/users/<int:user_id>/status", methods=["PUT"])
+def cambiar_estado(user_id):
+    data = request.json
+    response, status = controller.update_status(user_id, data)
+    return jsonify(response), status
+
+
+@user_bp.route("/users/search/<string:dni>", methods=["GET"])
+def buscar_usuario(dni):
+    response, status = controller.search_user(dni)
+    return jsonify(response), status
