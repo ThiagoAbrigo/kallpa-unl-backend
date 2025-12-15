@@ -15,3 +15,10 @@ def crear_user():
     data = request.json
     response, status = controller.create_user(data)
     return jsonify(response), status
+
+
+@user_bp.route("/users/initiation", methods=["POST"])
+def crear_iniciacion():
+    data = request.json
+    response, status = controller.create_initiation(data)
+    return jsonify(response), status

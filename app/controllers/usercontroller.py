@@ -8,3 +8,6 @@ class UserController:
 
     def create_user(self, data):
         return user_service.create_user(data)
+
+    def create_initiation(self, data):
+        return user_service.create_initiation_participant(data)

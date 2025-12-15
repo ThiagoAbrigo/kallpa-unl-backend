@@ -46,5 +46,43 @@
     "direccion": "Av. Universitaria",
     "estado": "ACTIVO",
     "tipo": "ESTUDIANTE"
+  },
+  {
+    "id": 8,
+    "nombre": "Pedrito",
+    "apellido": "González",
+    "edad": 8,
+    "dni": "1100000001",
+    "telefono": "",
+    "correo": "",
+    "direccion": "Loja Centro",
+    "estado": "ACTIVO",
+    "tipo": "INICIACION",
+    "responsable": {
+      "nombre": "María",
+      "apellido": "González",
+      "dni": "1100000002",
+      "telefono": "0991234567",
+      "parentesco": "Madre"
+    }
+  },
+  {
+    "id": 9,
+    "nombre": "Pedrito",
+    "apellido": "González",
+    "edad": 8,
+    "dni": "1100000001",
+    "telefono": "",
+    "correo": "",
+    "direccion": "Loja Centro",
+    "estado": "ACTIVO",
+    "tipo": "INICIACION",
+    "responsable": {
+      "nombre": "María",
+      "apellido": "González",
+      "dni": "1100000002",
+      "telefono": "0991234567",
+      "parentesco": "Madre"
+    }
   }
 ]
