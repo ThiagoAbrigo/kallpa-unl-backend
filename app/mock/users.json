@@ -34,5 +34,17 @@
     "nombre": "Santiago Abrigo",
     "email": "santiago@example.com",
     "rol": "administrativo"
+  },
+  {
+    "id": 7,
+    "nombre": "Carlos",
+    "apellido": "Vargas",
+    "edad": 22,
+    "dni": "1104005001",
+    "telefono": "0991234567",
+    "correo": "carlos.vargas@ejemplo.com",
+    "direccion": "Av. Universitaria",
+    "estado": "ACTIVO",
+    "tipo": "ESTUDIANTE"
   }
 ]
