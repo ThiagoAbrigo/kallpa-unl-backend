@@ -8,7 +8,11 @@ controller = AttendanceController()
 def registrar_asistencia():
     data = request.json
     result = controller.registrar_asistencia(data)
-    return jsonify(result), 201
+
+    if result["status"] == "error":
+        return jsonify(result), 400
+
+    return jsonify(result), 200
 
 @attendance_bp.route("/attendance", methods=["GET"])
 def listar_asistencias():
