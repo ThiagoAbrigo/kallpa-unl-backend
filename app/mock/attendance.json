@@ -1,0 +1,47 @@
+[
+    {
+        "user_id": 1,
+        "fecha": "2025-12-17",
+        "estado": "PRESENTE",
+        "id": 1
+    },
+    {
+        "user_id": 1,
+        "fecha": "2025-12-17",
+        "estado": "PRESENTE",
+        "id": 2
+    },
+    {
+        "user_id": 1,
+        "fecha": "2025-12-17",
+        "estado": "PRESENTE",
+        "id": 3
+    },
+    {
+        "user_id": 1,
+        "fecha": "2025-12-17",
+        "estado": "PRESENTE",
+        "id": 4
+    },
+    {
+        "user_id": 1,
+        "fecha": "2025-12-17",
+        "estado": "PRESENTE",
+        "id": 5
+    },
+    {
+        "user_id": 1,
+        "fecha": "2025-12-17",
+        "id": 6
+    },
+    {
+        "user_id": 1,
+        "fecha": "2025-12-17",
+        "id": 7
+    },
+    {
+        "user_id": 1,
+        "fecha": "2025-12-17",
+        "id": 8
+    }
+]

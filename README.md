@@ -1,27 +1,49 @@
-# KALLPA-UNL Backend
+📘 Manual de Instalación – KALLPA-UNL Backend
 
-Backend developed with **Flask + PostgreSQL**.
+Backend desarrollado con Flask + PostgreSQL.
 
----
+Requisitos:
 
-## 🚀 Requirements
+**Python 3.12**
 
-- **Python 3.12**
-- **Flask 3.1.2**
-- **PostgreSQL 18.1**
+**PostgreSQL 18**
 
+*pgAdmin 4 (opcional)*
 
----
+*Dependencias incluidas en requirements.txt*
 
-## 📦 Installation (Windows)
-
-1. Clone the repository:
-
-```bash
-git clone <repository-url>
+📦 Instalación en Windows
+Paso 1: 
+Clonar el repositorio
+git clone <https://github.com/ThiagoAbrigo/kallpa-unl-backend>
 cd KALLPA-UNL-BACKEND
 
-installation in windows:
-    -python -m venv venv
-    -.\venv\Scripts\activate   
+Paso 2:
+Crear y activar entorno virtual
+python -m venv venv
+.\venv\Scripts\activate
 
+Paso 3:
+Instalar dependencias del proyecto
+pip install -r requirements.txt
+
+🗄️ Configuración de la Base de Datos (PostgreSQL)
+
+Abrir pgAdmin o terminal.
+
+Crear base de datos:
+
+kallpa_db
+
+🔧 Configurar archivo .env
+
+Crear un archivo .env en la raíz del proyecto
+
+▶️ Ejecutar el proyecto
+
+python index.py
+
+
+Servidor disponible en:
+
+http://localhost:5000

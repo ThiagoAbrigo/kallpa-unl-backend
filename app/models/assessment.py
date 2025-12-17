@@ -1,15 +1,16 @@
 from app import db
+
 class Assessment(db.Model):
     __tablename__ = "assessment"
 
     id = db.Column(db.Integer, primary_key=True)
-    participant_id = db.Column(db.Integer, db.ForeignKey('participante.id'), nullable=False)
-    fecha = db.Column(db.String(50), nullable=False)
-    peso = db.Column(db.Float, nullable=False)
-    talla = db.Column(db.Float, nullable=False)
-    imc = db.Column(db.Float, nullable=False)
-    perimetroCintura = db.Column(db.Float, nullable=False)
-    envergadura = db.Column(db.Float, nullable=False)
+    participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
+    date = db.Column(db.String(50), nullable=False)
+    weight = db.Column(db.Float, nullable=False)
+    height = db.Column(db.Float, nullable=False)
+    bmi = db.Column(db.Float, nullable=False)
+    waistPerimeter = db.Column(db.Float, nullable=False)
+    wingspan = db.Column(db.Float, nullable=False)
     type = db.Column(db.String(50))
     
     __mapper_args__ = {
@@ -17,21 +18,21 @@ class Assessment(db.Model):
         'polymorphic_on': type
     }
 
-    def calcularIMC(self):
-        if self.talla > 0:
-            self.imc = self.peso / (self.talla ** 2)
+    def calculateBMI(self):
+        if self.height > 0:
+            self.bmi = self.weight / (self.height ** 2)
         else:
-            self.imc = 0
+            self.bmi = 0
 
-    def guardarResultados(self):
+    def saveResults(self):
         db.session.add(self)
         db.session.commit()
 
-    def editarResultados(self, fecha, peso, talla, perimetroCintura, envergadura):
-        self.fecha = fecha
-        self.peso = peso
-        self.talla = talla
-        self.perimetroCintura = perimetroCintura
-        self.envergadura = envergadura
-        self.calcularIMC()
+    def editResults(self, date, weight, height, waistPerimeter, wingspan):
+        self.date = date
+        self.weight = weight
+        self.height = height
+        self.waistPerimeter = waistPerimeter
+        self.wingspan = wingspan
+        self.calculateBMI()
         db.session.commit()
