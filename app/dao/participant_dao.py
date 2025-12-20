@@ -1,3 +1,4 @@
+import uuid  # <--- Importar para generar UUIDs
 from app import db
 from app.models.participant import Participant
 
@@ -21,18 +22,26 @@ class ParticipantDAO:
         """Obtiene un participante por su correo"""
         return Participant.query.filter_by(correo=correo).first()
 
+    def get_by_external_id(self, external_id):
+        """Obtiene un participante por su ID externo (UUID)"""
+        return Participant.query.filter_by(external_id=external_id).first()
+
     def create(self, nombre, apellido, edad, dni, telefono, correo, direccion, estado, tipo):
-        """Crea un nuevo participante"""
+        """Crea un nuevo participante con ID externo automático"""
+        # Generar el UUID automáticamente
+        generated_external_id = str(uuid.uuid4())
+        
         nuevo = Participant(
-            nombre=nombre,
-            apellido=apellido,
-            edad=edad,
+            external_id=generated_external_id,  # <--- UUID generado
+            firstName=nombre,
+            lastName=apellido,
+            age=edad,
             dni=dni,
-            telefono=telefono,
-            correo=correo,
-            direccion=direccion,
-            estado=estado,
-            tipo=tipo
+            phone=telefono,
+            email=correo,
+            address=direccion,
+            status=estado,
+            type=tipo
         )
         db.session.add(nuevo)
         db.session.commit()

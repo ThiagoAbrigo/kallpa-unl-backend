@@ -24,10 +24,10 @@ def crear_iniciacion():
     return jsonify(response), status
 
 
-@user_bp.route("/users/<int:user_id>/status", methods=["PUT"])
-def cambiar_estado(user_id):
+@user_bp.route("/users/<string:external_id>/status", methods=["PUT"])
+def cambiar_estado(external_id):
     data = request.json
-    response, status = controller.update_status(user_id, data)
+    response, status = controller.update_status(external_id, data)
     return jsonify(response), status
 
 
