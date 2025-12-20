@@ -3,5 +3,6 @@ Flask-SQLAlchemy
 python-dotenv
 Flask-Marshmallow
 marshmallow-sqlalchemy
+psycopg2-binary
 PyJWT
 requests

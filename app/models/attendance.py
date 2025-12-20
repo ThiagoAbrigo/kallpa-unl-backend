@@ -5,10 +5,9 @@ class Attendance(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     participant_id = db.Column(db.Integer, db.ForeignKey('participant.id'), nullable=False)
-    fecha = db.Column(db.String(50), nullable=False)
-    estado = db.Column(db.String(20), nullable=False)
+    date = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(20), nullable=False)
     
-    class Estado:
-        PRESENTE = "presente"
-        AUSENTE = "ausente"
-
+    class Status:
+        PRESENT = "present"
+        ABSENT = "absent"

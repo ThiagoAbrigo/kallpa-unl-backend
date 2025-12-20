@@ -1,6 +1,6 @@
 import json
 import os
-
+from app.utils.responses import success_response, error_response
 class AttendanceServiceMock:
 
     def __init__(self):
@@ -20,18 +20,28 @@ class AttendanceServiceMock:
             json.dump(data, f, indent=4)
 
     def registrar_asistencia(self, data):
-        registros = self._load()
+        if not data:
+            return error_response("No se enviaron datos")
 
-        data["id"] = len(registros) + 1
-        registros.append(data)
+        campos = ["user_id", "fecha", "estado"]
+        for campo in campos:
+            if campo not in data:
+                return error_response(f"Falta el campo: {campo}")
+        try:
+            registros = self._load()
 
-        self._save(registros)
-        print("✔ [MOCK] Asistencia guardada:", data)
-        return {
-            "status": "ok",
-            "msg": "Asistencia registrada (mock)",
-            "data": data
-        }
+            data["id"] = len(registros) + 1
+            registros.append(data)
+
+            self._save(registros)
+
+            return success_response(
+                msg="Asistencia registrada",
+                data=data
+            )
+        except Exception as e:
+            return error_response(f"Error interno al guardar la asistencia: {e}")
+
 
     def obtener_asistencias(self):
         return self._load()
