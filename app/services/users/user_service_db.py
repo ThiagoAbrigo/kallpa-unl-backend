@@ -1,118 +1,169 @@
-from app.dao.participant_dao import ParticipantDAO
-from app.dao.responsible_dao import ResponsibleDAO
-from app.schemas.participant_schema import participant_schema, participants_schema
+from app.utils.responses import success_response, error_response
+from app.models.participant import Participant
+from app.models.responsible import Responsible
+from app import db
 
 
 class UserServiceDB:
-    def __init__(self):
-        self.dao = ParticipantDAO()
-        self.responsible_dao = ResponsibleDAO()
 
     def get_all_users(self):
-        result = self.dao.get_all()
-        return participants_schema.dump(result)
+        try:
+            participants = Participant.query.all()
+
+            data = [
+                {
+                    "external_id": p.external_id,
+                    "firstName": p.firstName,
+                    "lastName": p.lastName,
+                    "email": p.email,
+                    "status": p.status,
+                    "type": p.type,
+                }
+                for p in participants
+            ]
+
+            return success_response(msg="Usuarios listados correctamente", data=data)
+        except Exception:
+            return error_response("Error interno del servidor", code=500)
 
     def create_user(self, data):
         try:
-            nuevo_participante = self.dao.create(
-                nombre=data.get('nombre'),
-                apellido=data.get('apellido'),
-                edad=data.get('edad'),
-                dni=data.get('dni'),
-                telefono=data.get('telefono'),
-                correo=data.get('correo'),
-                direccion=data.get('direccion'),
-                estado="ACTIVO",
-                tipo=data.get('tipo', 'EXTERNO')
+            participant = Participant(
+                firstName=data.get("nombre"),
+                lastName=data.get("apellido"),
+                age=data.get("edad"),
+                dni=data.get("dni"),
+                phone=data.get("telefono"),
+                email=data.get("correo"),
+                address=data.get("direccion"),
+                status="ACTIVO",
+                type=data.get("tipo", "EXTERNO"),
             )
-            return {
-                "status": "ok",
-                "msg": "Participante registrado exitosamente",
-                "data": participant_schema.dump(nuevo_participante)
-            }, 201
-        except Exception as e:
-            return {
-                "status": "error",
-                "msg": f"Error al registrar: {str(e)}"
-            }, 400
+            db.session.add(participant)
+            db.session.commit()
+            return success_response(
+                msg="Participant successfully registered",
+                data={
+                    "external_id": participant.external_id,
+                    "firstName": participant.firstName,
+                    "lastName": participant.lastName,
+                },
+            )
+        except Exception:
+            db.session.rollback()
+            return error_response(
+                msg="Error interno del servidor al registrar el usuario", code=500
+            )
 
     def create_initiation_participant(self, data):
         """Crea un participante de iniciación con su responsable"""
         try:
-            # Separamos los datos del JSON
-            datos_nino = data.get('participante')
-            datos_padre = data.get('responsable')
+            datos_nino = data.get("participante")
+            datos_responsable = data.get("responsable")
 
-            if not datos_nino or not datos_padre:
-                return {"status": "error", "msg": "Faltan datos del niño o responsable"}, 400
+            if not datos_nino or not datos_responsable:
+                return error_response(
+                    msg="Faltan datos del participante o del responsable",
+                )
 
-            # A. Crear al Niño (Participante)
-            nuevo_nino = self.dao.create(
-                nombre=datos_nino.get('nombre'),
-                apellido=datos_nino.get('apellido'),
-                edad=datos_nino.get('edad'),
-                dni=datos_nino.get('dni'),
-                telefono=datos_nino.get('telefono', ''),
-                correo=datos_nino.get('correo', ''),
-                direccion=datos_nino.get('direccion', ''),
-                estado="ACTIVO",
-                tipo="INICIACION"
+            # 1. Crear participante (niño)
+            participant = Participant(
+                firstName=datos_nino.get("nombre"),
+                lastName=datos_nino.get("apellido"),
+                age=datos_nino.get("edad"),
+                dni=datos_nino.get("dni"),
+                phone=datos_nino.get("telefono"),
+                email=datos_nino.get("correo"),
+                address=datos_nino.get("direccion"),
+                status="ACTIVO",
+                type="INICIACION",
             )
 
-            # B. Crear al Responsable vinculado
-            self.responsible_dao.create(
-                participant_id=nuevo_nino.id,
-                nombre=datos_padre.get('nombre'),
-                apellido=datos_padre.get('apellido'),
-                dni=datos_padre.get('dni'),
-                telefono=datos_padre.get('telefono'),
-                parentesco=datos_padre.get('parentesco', 'Representante')
+            db.session.add(participant)
+            db.session.flush()  
+
+            # 2. Crear responsable
+            responsible = Responsible(
+                name=datos_responsable.get("nombre"),
+                dni=datos_responsable.get("dni"),
+                phone=datos_responsable.get("telefono"),
+                participant_id=participant.id,
             )
 
-            return {
-                "status": "ok",
-                "msg": "Niño y representante registrados correctamente",
-                "data": {"id_participante": nuevo_nino.id}
-            }, 201
+            db.session.add(responsible)
 
-        except Exception as e:
-            return {"status": "error", "msg": f"Error en registro: {str(e)}"}, 400
+            # 3. Confirmar transacción
+            db.session.commit()
 
-    def change_status(self, external_id, nuevo_estado):
+            return success_response(
+                msg="Participante de iniciación y responsable registrados correctamente",
+                data={
+                    "participant_external_id": participant.external_id,
+                    "responsible_external_id": responsible.external_id,
+                },
+            )
+
+        except Exception:
+            db.session.rollback()
+            return error_response(
+                msg="Error interno del servidor al registrar la iniciación",
+                code=500
+            )
+
+
+    def change_status(self, external_id, new_state):
         """RF010: Cambiar estado (Activar/Inactivar) - Usa external_id"""
         try:
             # Validar que el estado sea válido
-            if nuevo_estado not in ["ACTIVO", "INACTIVO"]:
-                return {"status": "error", "msg": "Estado inválido. Use ACTIVO o INACTIVO"}, 400
+            if new_state not in ["ACTIVO", "INACTIVO"]:
+                return error_response(
+                    msg="Estado inválido. Use ACTIVO o INACTIVO",
+                )
 
             # 1. Buscar por external_id
-            usuario = self.dao.get_by_external_id(external_id)
-            
-            if not usuario:
-                return {"status": "error", "msg": "Usuario no encontrado"}, 404
+            participant = Participant.query.filter_by(external_id=external_id).first()
+
+            if not participant:
+                return error_response(
+                    msg="Participant not found",
+                )
 
             # 2. Actualizar usando el ID interno
-            usuario_actualizado = self.dao.update(usuario.id, status=nuevo_estado)
+            participant.status = new_state
+            db.session.commit()
 
-            return {
-                "status": "ok",
-                "msg": f"Estado actualizado a {nuevo_estado}",
-                "data": participant_schema.dump(usuario_actualizado)
-            }, 200
-        except Exception as e:
-            return {"status": "error", "msg": str(e)}, 500
+            return success_response(
+                msg=f"Status updated to {new_state}",
+                data={"external_id": participant.external_id},
+            )
+
+        except Exception:
+            db.session.rollback()
+            return error_response(
+                msg="Error interno del servidor al cambiar el estado", code=500
+            )
 
     def search_by_dni(self, dni):
         """RF011: Buscar por DNI"""
         try:
-            usuario = self.dao.get_by_dni(dni)
-            
-            if not usuario:
-                return {"status": "error", "msg": "Participante no encontrado"}, 404
-                
-            return {
-                "status": "ok",
-                "data": participant_schema.dump(usuario)
-            }, 200
-        except Exception as e:
-            return {"status": "error", "msg": str(e)}, 500
+            participant = Participant.query.filter_by(dni=dni).first()
+
+            if not participant:
+                return error_response(
+                    msg="Participant not found",
+                )
+
+            return success_response(
+                msg="Participant found",
+                data={
+                    "external_id": participant.external_id,
+                    "firstName": participant.firstName,
+                    "lastName": participant.lastName,
+                    "dni": participant.dni,
+                },
+            )
+        except Exception:
+            db.session.rollback()
+        return error_response(
+            msg="Error interno del servidor al buscar el participante", code=500
+        )

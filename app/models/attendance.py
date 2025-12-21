@@ -1,5 +1,6 @@
 from app import db
 
+
 class Attendance(db.Model):
     __tablename__ = "attendance"
 
@@ -8,7 +9,7 @@ class Attendance(db.Model):
     schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id'), nullable=False)
     date = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(20), nullable=False)
-    
+
     class Status:
         PRESENT = "present"
         ABSENT = "absent"

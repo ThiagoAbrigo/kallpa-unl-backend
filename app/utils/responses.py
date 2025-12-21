@@ -1,13 +1,15 @@
-def success_response(msg, data=None, status="ok"):
+def success_response(msg, data=None, code=200):
     return {
-        "status": status,
+        "status": "ok",
         "msg": msg,
-        "data": data
+        "data": data,
+        "code": code
     }
 
-def error_response(msg, status="error", data=None):
+def error_response(msg, code=400, data=None):
     return {
-        "status": status,
+        "status": "error",
         "msg": msg,
-        "data": data
+        "data": data,
+        "code": code
     }
