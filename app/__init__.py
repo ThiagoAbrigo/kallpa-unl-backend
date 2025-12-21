@@ -9,6 +9,10 @@ def create_app():
     app.config.from_object(Config)
     db.init_app(app)
     
+    # Inicializar Marshmallow
+    from app.schemas import ma
+    ma.init_app(app)
+    
     with app.app_context():
         from app import models
         db.create_all()
@@ -18,5 +22,7 @@ def create_app():
         app.register_blueprint(user_bp, url_prefix='/api')
         from app.routes.attendance_routes import attendance_bp
         app.register_blueprint(attendance_bp, url_prefix='/api')
+        from app.routes.auth_routes import auth_bp
+        app.register_blueprint(auth_bp, url_prefix='/api')
 
     return app

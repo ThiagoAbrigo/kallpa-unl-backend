@@ -4,6 +4,7 @@ class Participant(db.Model):
     __tablename__ = "participant"
 
     id = db.Column(db.Integer, primary_key=True)
+    external_id = db.Column(db.String(100), nullable=True, unique=True)  # ID del Docker
     firstName = db.Column(db.String(100), nullable=False)
     lastName = db.Column(db.String(100), nullable=False)
     age = db.Column(db.Integer, nullable=False)

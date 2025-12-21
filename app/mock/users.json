@@ -34,5 +34,79 @@
     "nombre": "Santiago Abrigo",
     "email": "santiago@example.com",
     "rol": "administrativo"
+  },
+  {
+    "id": 7,
+    "nombre": "Carlos",
+    "apellido": "Vargas",
+    "edad": 22,
+    "dni": "1104005001",
+    "telefono": "0991234567",
+    "correo": "carlos.vargas@ejemplo.com",
+    "direccion": "Av. Universitaria",
+    "estado": "ACTIVO",
+    "tipo": "ESTUDIANTE"
+  },
+  {
+    "id": 8,
+    "nombre": "Pedrito",
+    "apellido": "González",
+    "edad": 8,
+    "dni": "1100000001",
+    "telefono": "",
+    "correo": "",
+    "direccion": "Loja Centro",
+    "estado": "ACTIVO",
+    "tipo": "INICIACION",
+    "responsable": {
+      "nombre": "María",
+      "apellido": "González",
+      "dni": "1100000002",
+      "telefono": "0991234567",
+      "parentesco": "Madre"
+    }
+  },
+  {
+    "id": 9,
+    "nombre": "Pedrito",
+    "apellido": "González",
+    "edad": 8,
+    "dni": "1100000001",
+    "telefono": "",
+    "correo": "",
+    "direccion": "Loja Centro",
+    "estado": "ACTIVO",
+    "tipo": "INICIACION",
+    "responsable": {
+      "nombre": "María",
+      "apellido": "González",
+      "dni": "1100000002",
+      "telefono": "0991234567",
+      "parentesco": "Madre"
+    }
+  },
+  {
+    "id": 10,
+    "nombre": "Carlos",
+    "apellido": "Varg",
+    "edad": 21,
+    "dni": "1104005002",
+    "telefono": "0991234565",
+    "correo": "carlos.vargas@ejempo.com",
+    "direccion": "Av. Universitaia",
+    "estado": "ACTIVO",
+    "tipo": "ESTUDIANTE"
+  },
+  {
+    "id": 11,
+    "nombre": "Juan",
+    "apellido": "Pérez",
+    "edad": 25,
+    "dni": "1104000001",
+    "telefono": "0991234567",
+    "correo": "juan.perez@unl.edu.ec",
+    "direccion": "San Sebastián",
+    "estado": "ACTIVO",
+    "tipo": "ESTUDIANTE"
   }
 ]
