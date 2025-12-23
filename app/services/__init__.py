@@ -12,6 +12,10 @@ from app.services.attendance.attendance_service_db import AttendanceServiceDB
 from app.services.assessment.assessment_service_mock import AssessmentServiceMock
 from app.services.assessment.assessment_service_db import AssessmentServiceDB
 
+# TEST
+from app.services.evaluation.evaluation_service_mock import EvaluationServiceMock
+from app.services.evaluation.evaluation_service_bd import EvaluationServiceDB
+
 # Get USE_MOCK from environment variable
 USE_MOCK = os.getenv('USE_MOCK', 'false').lower() == 'true'
 
@@ -19,7 +23,9 @@ if USE_MOCK:
     user_service = UserServiceMock()
     attendance_service = AttendanceServiceMock()
     assessment_service = AssessmentServiceMock()
+    evaluation_service = EvaluationServiceMock()
 else:
     user_service = UserServiceDB()
     attendance_service = AttendanceServiceDB()
     assessment_service = AssessmentServiceDB()
+    evaluation_service = EvaluationServiceDB()

@@ -108,5 +108,43 @@
     "direccion": "San Sebastián",
     "estado": "ACTIVO",
     "tipo": "ESTUDIANTE"
+  },
+  {
+    "id": 12,
+    "nombre": "Kevin",
+    "apellido": "Niño",
+    "edad": 10,
+    "dni": "1105000002",
+    "telefono": "",
+    "correo": "",
+    "direccion": "El Valle",
+    "estado": "ACTIVO",
+    "tipo": "INICIACION",
+    "responsable": {
+      "nombre": "Padre de Kevin",
+      "apellido": "Niño",
+      "dni": "1105000099",
+      "telefono": "0999999999",
+      "parentesco": "Padre"
+    }
+  },
+  {
+    "id": 13,
+    "nombre": "Kevin",
+    "apellido": "Niño",
+    "edad": 10,
+    "dni": "1105000002",
+    "telefono": "",
+    "correo": "",
+    "direccion": "El Valle",
+    "estado": "ACTIVO",
+    "tipo": "INICIACION",
+    "responsable": {
+      "nombre": "Padre de Kevin",
+      "apellido": "Niño",
+      "dni": "1105000099",
+      "telefono": "0999999999",
+      "parentesco": "Padre"
+    }
   }
 ]

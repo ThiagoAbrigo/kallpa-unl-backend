@@ -1,0 +1,20 @@
+[
+    {
+        "external_id": "d6ad9e53-14a1-4a75-ad9a-ba89c067bd08",
+        "name": "Evaluaci\u00f3n F\u00edsica Inicial",
+        "description": "Condici\u00f3n f\u00edsica general",
+        "frequency_months": 3,
+        "exercises": [
+            {
+                "external_id": "293948d6-4d6f-44f7-906e-a9d76bdb459c",
+                "name": "Burpees",
+                "unit": "repeticiones"
+            },
+            {
+                "external_id": "4c2b458c-6ec6-4854-aec4-e78c1623d814",
+                "name": "Plancha",
+                "unit": "segundos"
+            }
+        ]
+    }
+]

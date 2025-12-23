@@ -7,6 +7,10 @@ from .assessment import Assessment
 from .initialAssessment import InitialAssessment
 from .aerobicAssessment import AerobicAssessment
 from .periodicTest import PeriodicTest
+from .evaluation import Evaluation
+from .evaluationResult import EvaluationResult
+from .test import Test
+from .testExercise import TestExercise
 
 __all__ = [
     "Attendance",
@@ -18,4 +22,8 @@ __all__ = [
     "InitialAssessment",
     "AerobicAssessment",
     "PeriodicTest",
+    "Evaluation",
+    "EvaluationResult",
+    "Test",
+    "TestExercise"
 ]
