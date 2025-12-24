@@ -6,11 +6,11 @@ user_bp = Blueprint("users", __name__)
 controller = UserController()
 
 def response_handler(result):
+    print("TYPE:", type(result), result)
     status_code = result.get("code", 200)
     return jsonify(result), status_code
 
 @user_bp.route("/users", methods=["GET"])
-@jwt_required
 def listar_users():
     return response_handler(controller.get_users())
 

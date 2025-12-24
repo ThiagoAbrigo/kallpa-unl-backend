@@ -16,6 +16,7 @@ class UserServiceDB:
                     "firstName": p.firstName,
                     "lastName": p.lastName,
                     "email": p.email,
+                    "dni": p.dni,
                     "status": p.status,
                     "type": p.type,
                 }
@@ -67,13 +68,19 @@ class UserServiceDB:
                 )
 
             # 1. Crear participante (niño)
+            email = datos_nino.get("correo")
+
+            # 🔑 convertir string vacío a None
+            if email == "":
+                email = None
+
             participant = Participant(
                 firstName=datos_nino.get("nombre"),
                 lastName=datos_nino.get("apellido"),
                 age=datos_nino.get("edad"),
                 dni=datos_nino.get("dni"),
                 phone=datos_nino.get("telefono"),
-                email=datos_nino.get("correo"),
+                email=email,
                 address=datos_nino.get("direccion"),
                 status="ACTIVO",
                 type="INICIACION",
@@ -103,10 +110,10 @@ class UserServiceDB:
                 },
             )
 
-        except Exception:
+        except Exception as e:
             db.session.rollback()
             return error_response(
-                msg="Error interno del servidor al registrar la iniciación",
+                msg=str(e),
                 code=500
             )
 

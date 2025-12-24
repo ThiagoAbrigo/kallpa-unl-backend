@@ -17,9 +17,7 @@ class Assessment(db.Model):
     bmi = db.Column(db.Float, nullable=False)
     waistPerimeter = db.Column(db.Float, nullable=False)
     wingspan = db.Column(db.Float, nullable=False)
-    type = db.Column(db.String(50))
-
-    __mapper_args__ = {"polymorphic_identity": "assessment", "polymorphic_on": type}
+    status = db.Column(db.String(30), nullable=False)
 
     def saveResults(self):
         db.session.add(self)

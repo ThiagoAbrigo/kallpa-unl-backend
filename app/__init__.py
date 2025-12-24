@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from app.config.config import Config
+from flask_cors import CORS 
 
 db = SQLAlchemy()
 
@@ -8,7 +9,7 @@ def create_app():
     app = Flask(__name__, instance_relative_config=False)
     app.config.from_object(Config)
     db.init_app(app)
-    
+    CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
     with app.app_context():
         from app import models
         db.create_all()

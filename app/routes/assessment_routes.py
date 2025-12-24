@@ -14,3 +14,12 @@ def response_handler(result):
 def register_evaluation():
     data = request.json
     return response_handler(controller.register(data))
+
+@assessment_bp.route("/list-assessment", methods=["GET"])
+def list_evaluation():
+    return response_handler(controller.get_assessment())
+
+@assessment_bp.route("/update-assessment/<string:external_id>", methods=["PUT"])
+def update_evaluation(external_id):
+    data = request.json
+    return response_handler(controller.update(external_id, data))

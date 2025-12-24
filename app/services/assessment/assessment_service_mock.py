@@ -21,6 +21,21 @@ class AssessmentServiceMock:
         with open(self.mock_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
 
+    def get_all_assessments(self):
+        try:
+            assessments = self._load()
+
+            return success_response(
+                msg="Evaluaciones listadas correctamente (MOCK)",
+                data=assessments
+            )
+
+        except Exception as e:
+            return error_response(
+                msg=f"Internal error MOCK: {str(e)}",
+                code=500
+            )
+
     def calculateBMI(self, weight, height):
         if height and height > 0:
             return round(weight / (height**2), 2)
@@ -56,3 +71,45 @@ class AssessmentServiceMock:
 
         except Exception as e:
             return error_response(f"Internal error MOCK: {str(e)}")
+
+    def update_assessment(self, external_id, data):
+        try:
+            assessments = self._load()
+            updated = False
+
+            for assessment in assessments:
+                if assessment["external_id"] == external_id:
+
+                    assessment["date"] = data.get("date", assessment.get("date"))
+                    assessment["weight"] = data.get("weight", assessment.get("weight"))
+                    assessment["height"] = data.get("height", assessment.get("height"))
+                    assessment["waistPerimeter"] = data.get(
+                        "waistPerimeter", assessment.get("waistPerimeter")
+                    )
+                    assessment["wingspan"] = data.get(
+                        "wingspan", assessment.get("wingspan")
+                    )
+
+                    assessment["bmi"] = self.calculateBMI(
+                        assessment.get("weight"),
+                        assessment.get("height")
+                    )
+
+                    updated = True
+                    break
+
+            if not updated:
+                return error_response("Evaluación no encontrada (MOCK)")
+
+            self._save(assessments)
+
+            return success_response(
+                msg="Evaluación actualizada correctamente (MOCK)",
+                data=assessment
+            )
+
+        except Exception as e:
+            return error_response(
+                msg=f"Internal error MOCK: {str(e)}",
+                code=500
+            )
