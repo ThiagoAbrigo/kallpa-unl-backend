@@ -41,6 +41,18 @@ class AttendanceController:
         """Obtener todos los horarios"""
         return attendance_service.obtener_schedules()
 
+    def crear_schedule(self, data):
+        """Crear un nuevo horario/sesión"""
+        return attendance_service.crear_schedule(data)
+
+    def actualizar_schedule(self, schedule_id, data):
+        """Actualizar un horario/sesión"""
+        return attendance_service.actualizar_schedule(schedule_id, data)
+
+    def eliminar_schedule(self, schedule_id):
+        """Eliminar un horario/sesión"""
+        return attendance_service.eliminar_schedule(schedule_id)
+
     def obtener_sesiones_hoy(self):
         """Obtener las sesiones programadas para hoy"""
         return attendance_service.obtener_sesiones_hoy()
@@ -48,3 +60,19 @@ class AttendanceController:
     def obtener_historial(self, date_from=None, date_to=None):
         """Obtener historial de asistencias"""
         return attendance_service.obtener_historial(date_from, date_to)
+
+    def registrar_asistencia_publica(self, data):
+        """Registrar asistencia desde el frontend"""
+        return attendance_service.registrar_asistencia_publica(data)
+
+    def obtener_programas(self):
+        """Obtener todos los programas"""
+        return attendance_service.obtener_programas()
+
+    def obtener_detalle_sesion(self, schedule_id, date):
+        """Obtener detalle de asistencia de una sesión"""
+        return attendance_service.obtener_detalle_sesion(schedule_id, date)
+
+    def eliminar_asistencia_sesion(self, schedule_id, date):
+        """Eliminar asistencia de una sesión"""
+        return attendance_service.eliminar_asistencia_sesion(schedule_id, date)

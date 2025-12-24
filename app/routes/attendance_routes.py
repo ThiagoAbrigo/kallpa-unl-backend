@@ -86,6 +86,29 @@ def obtener_schedules():
     return response_handler(result)
 
 
+@attendance_bp.route("/attendance/v2/public/schedules", methods=["POST"])
+def crear_schedule():
+    """Crear un nuevo horario/sesión"""
+    data = request.json
+    result = controller.crear_schedule(data)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/v2/public/schedules/<schedule_id>", methods=["PUT"])
+def actualizar_schedule(schedule_id):
+    """Actualizar un horario/sesión"""
+    data = request.json
+    result = controller.actualizar_schedule(schedule_id, data)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/v2/public/schedules/<schedule_id>", methods=["DELETE"])
+def eliminar_schedule(schedule_id):
+    """Eliminar un horario/sesión"""
+    result = controller.eliminar_schedule(schedule_id)
+    return response_handler(result)
+
+
 @attendance_bp.route("/attendance/v2/public/sessions/today", methods=["GET"])
 def obtener_sesiones_hoy():
     """Obtener las sesiones programadas para hoy"""
@@ -99,4 +122,33 @@ def obtener_historial():
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
     result = controller.obtener_historial(date_from, date_to)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/v2/public/register", methods=["POST"])
+def registrar_asistencia_publica():
+    """Registrar asistencia desde el frontend"""
+    data = request.json
+    result = controller.registrar_asistencia_publica(data)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/v2/public/programs", methods=["GET"])
+def obtener_programas():
+    """Obtener todos los programas"""
+    result = controller.obtener_programas()
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/v2/public/history/session/<schedule_id>/<date>", methods=["GET"])
+def obtener_detalle_sesion(schedule_id, date):
+    """Obtener detalle de asistencia de una sesión específica"""
+    result = controller.obtener_detalle_sesion(schedule_id, date)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/v2/public/history/session/<schedule_id>/<date>", methods=["DELETE"])
+def eliminar_asistencia_sesion(schedule_id, date):
+    """Eliminar asistencia de una sesión específica"""
+    result = controller.eliminar_asistencia_sesion(schedule_id, date)
     return response_handler(result)

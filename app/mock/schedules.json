@@ -1,66 +1,23 @@
 [
-  {
-    "external_id": "sched-001-uuid",
-    "day_of_week": "monday",
-    "start_time": "08:00",
-    "end_time": "09:00",
-    "program_id": 1,
-    "program_name": "Programa Adultos Mayores"
-  },
-  {
-    "external_id": "sched-002-uuid",
-    "day_of_week": "monday",
-    "start_time": "10:00",
-    "end_time": "11:00",
-    "program_id": 2,
-    "program_name": "Programa Jóvenes"
-  },
-  {
-    "external_id": "sched-003-uuid",
-    "day_of_week": "wednesday",
-    "start_time": "08:00",
-    "end_time": "09:00",
-    "program_id": 1,
-    "program_name": "Programa Adultos Mayores"
-  },
-  {
-    "external_id": "sched-004-uuid",
-    "day_of_week": "wednesday",
-    "start_time": "10:00",
-    "end_time": "11:00",
-    "program_id": 2,
-    "program_name": "Programa Jóvenes"
-  },
-  {
-    "external_id": "sched-005-uuid",
-    "day_of_week": "friday",
-    "start_time": "08:00",
-    "end_time": "09:00",
-    "program_id": 1,
-    "program_name": "Programa Adultos Mayores"
-  },
-  {
-    "external_id": "sched-006-uuid",
-    "day_of_week": "friday",
-    "start_time": "10:00",
-    "end_time": "11:00",
-    "program_id": 2,
-    "program_name": "Programa Jóvenes"
-  },
-  {
-    "external_id": "sched-007-uuid",
-    "day_of_week": "tuesday",
-    "start_time": "16:00",
-    "end_time": "17:00",
-    "program_id": 3,
-    "program_name": "Programa Vespertino"
-  },
-  {
-    "external_id": "sched-008-uuid",
-    "day_of_week": "thursday",
-    "start_time": "16:00",
-    "end_time": "17:00",
-    "program_id": 3,
-    "program_name": "Programa Vespertino"
-  }
+    {
+        "external_id": "d2bf2c23-e03b-413c-85a7-e84192295749",
+        "program_id": 1,
+        "name": ",sdclkd",
+        "dayOfWeek": "thursday",
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "maxSlots": 30
+    },
+    {
+        "external_id": "e0ae4444-e1d6-4699-930d-284ebee44cf1",
+        "program_id": 1,
+        "program_name": "Programa 1",
+        "day_of_week": "tuesday",
+        "start_time": "08:00",
+        "end_time": "09:00",
+        "name": "kmljksd",
+        "location": "scas",
+        "capacity": 30,
+        "description": "sadfad"
+    }
 ]

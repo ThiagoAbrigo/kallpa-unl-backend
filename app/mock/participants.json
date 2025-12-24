@@ -1,47 +1,7 @@
 [
-  {
-    "external_id": "part-001-uuid",
-    "first_name": "Juan",
-    "last_name": "García",
-    "dni": "1104567890",
-    "email": "juan.garcia@example.com",
-    "phone": "0991234567",
-    "status": "active"
-  },
-  {
-    "external_id": "part-002-uuid",
-    "first_name": "María",
-    "last_name": "López",
-    "dni": "1105678901",
-    "email": "maria.lopez@example.com",
-    "phone": "0992345678",
-    "status": "active"
-  },
-  {
-    "external_id": "part-003-uuid",
-    "first_name": "Carlos",
-    "last_name": "Rodríguez",
-    "dni": "1106789012",
-    "email": "carlos.rodriguez@example.com",
-    "phone": "0993456789",
-    "status": "active"
-  },
-  {
-    "external_id": "part-004-uuid",
-    "first_name": "Ana",
-    "last_name": "Martínez",
-    "dni": "1107890123",
-    "email": "ana.martinez@example.com",
-    "phone": "0994567890",
-    "status": "active"
-  },
-  {
-    "external_id": "part-005-uuid",
-    "first_name": "Pedro",
-    "last_name": "Sánchez",
-    "dni": "1108901234",
-    "email": "pedro.sanchez@example.com",
-    "phone": "0995678901",
-    "status": "inactive"
-  }
+  {"external_id": "part-001-uuid", "firstName": "Juan", "lastName": "García", "dni": "1104567890", "email": "juan.garcia@example.com", "phone": "0991234567", "status": "active"},
+  {"external_id": "part-002-uuid", "firstName": "María", "lastName": "López", "dni": "1105678901", "email": "maria.lopez@example.com", "phone": "0992345678", "status": "active"},
+  {"external_id": "part-003-uuid", "firstName": "Carlos", "lastName": "Rodríguez", "dni": "1106789012", "email": "carlos.rodriguez@example.com", "phone": "0993456789", "status": "active"},
+  {"external_id": "part-004-uuid", "firstName": "Ana", "lastName": "Martínez", "dni": "1107890123", "email": "ana.martinez@example.com", "phone": "0994567890", "status": "active"},
+  {"external_id": "part-005-uuid", "firstName": "Pedro", "lastName": "Sánchez", "dni": "1108901234", "email": "pedro.sanchez@example.com", "phone": "0995678901", "status": "inactive"}
 ]
