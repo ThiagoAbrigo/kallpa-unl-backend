@@ -14,9 +14,6 @@ def response_handler(result):
 def listar_users():
     result = controller.get_users()
     
-    # --- AGREGAR ESTO (Parche de seguridad) ---
-    # Si el servicio devuelve una lista pura (que es lo que causa el error 500)
-    # la envolvemos en un diccionario para que no explote.
     if isinstance(result, list):
         return jsonify({"status": "ok", "data": result}), 200
     # ------------------------------------------
