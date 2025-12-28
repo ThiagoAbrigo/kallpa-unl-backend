@@ -12,7 +12,16 @@ def response_handler(result):
 
 @user_bp.route("/users", methods=["GET"])
 def listar_users():
-    return response_handler(controller.get_users())
+    result = controller.get_users()
+    
+    # --- AGREGAR ESTO (Parche de seguridad) ---
+    # Si el servicio devuelve una lista pura (que es lo que causa el error 500)
+    # la envolvemos en un diccionario para que no explote.
+    if isinstance(result, list):
+        return jsonify({"status": "ok", "data": result}), 200
+    # ------------------------------------------
+
+    return response_handler(result)
 
 @user_bp.route("/users", methods=["POST"])
 def crear_user():
