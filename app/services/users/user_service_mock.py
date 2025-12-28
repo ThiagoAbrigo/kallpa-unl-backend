@@ -1,6 +1,6 @@
 import json
 import os
-from app.utils.responses import success_response
+from app.utils.responses import success_response, error_response
 
 
 class UserServiceMock:
@@ -31,39 +31,39 @@ class UserServiceMock:
         # Crear nuevo usuario
         new_user = {
             "id": new_id,
-            "nombre": data.get("nombre"),
-            "apellido": data.get("apellido"),
-            "edad": data.get("edad"),
+            "firstName": data.get("firstName"),
+            "lastName": data.get("lastName"),
+            "age": data.get("age"),
             "dni": data.get("dni"),
-            "telefono": data.get("telefono"),
-            "correo": data.get("correo"),
-            "direccion": data.get("direccion"),
-            "estado": "ACTIVO",
-            "tipo": data.get("tipo", "ESTUDIANTE"),
+            "phone": data.get("phone"),
+            "email": data.get("email"),
+            "address": data.get("address"),
+            "status": "ACTIVO",
+            "type": data.get("type", "ESTUDIANTE"),
         }
 
         users.append(new_user)
         self._save(users)
 
-        return {
-            "status": "ok",
-            "msg": "Participante registrado exitosamente (MOCK)",
-            "data": new_user,
-        }, 201
+        return success_response(
+            msg="Participante registrado exitosamente (MOCK)",
+            data=new_user,
+            code=201
+        )
 
     def create_initiation_participant(self, data):
         """Crea un participante de iniciación con su responsable (versión MOCK)"""
         users = self._load()
 
         # Separar datos
-        datos_nino = data.get("participante")
-        datos_padre = data.get("responsable")
+        datos_nino = data.get("participant")
+        datos_padre = data.get("responsible")
 
         if not datos_nino or not datos_padre:
-            return {
-                "status": "error",
-                "msg": "Faltan datos del niño o responsable",
-            }, 400
+            return error_response(
+                msg="Faltan datos del niño o responsable",
+                code=400
+            )
 
         # Generar nuevo ID
         new_id = max([u.get("id", 0) for u in users], default=0) + 1
@@ -71,21 +71,20 @@ class UserServiceMock:
         # Crear participante de iniciación
         new_participant = {
             "id": new_id,
-            "nombre": datos_nino.get("nombre"),
-            "apellido": datos_nino.get("apellido"),
-            "edad": datos_nino.get("edad"),
+            "firstName": datos_nino.get("firstName"),
+            "lastName": datos_nino.get("lastName"),
+            "age": datos_nino.get("age"),
             "dni": datos_nino.get("dni"),
-            "telefono": datos_nino.get("telefono", ""),
-            "correo": datos_nino.get("correo", ""),
-            "direccion": datos_nino.get("direccion", ""),
-            "estado": "ACTIVO",
-            "tipo": "INICIACION",
-            "responsable": {
-                "nombre": datos_padre.get("nombre"),
-                "apellido": datos_padre.get("apellido"),
+            "phone": datos_nino.get("phone", ""),
+            "email": datos_nino.get("email", ""),
+            "address": datos_nino.get("address", ""),
+            "status": "ACTIVO",
+            "type": "INICIACION",
+            "responsible": {
+                "name": datos_padre.get("name"),
                 "dni": datos_padre.get("dni"),
-                "telefono": datos_padre.get("telefono"),
-                "parentesco": datos_padre.get("parentesco", "Representante"),
+                "phone": datos_padre.get("phone"),
+                "relationship": datos_padre.get("relationship", "Representante"),
             },
         }
 
@@ -93,11 +92,9 @@ class UserServiceMock:
         self._save(users)
 
         return success_response(
-            msg="Participante de iniciación y responsable registrados correctamente",
-            data={
-                # "participant_external_id": participant.external_id,
-                # "responsible_external_id": responsible.external_id,
-            },
+            msg="Participante de iniciación y responsable registrados correctamente (MOCK)",
+            data=new_participant,
+            code=201
         )
 
     def change_status(self, user_id, nuevo_estado):
@@ -112,17 +109,16 @@ class UserServiceMock:
                 break
 
         if not user_found:
-            return {"status": "error", "msg": "Participante no encontrado"}, 404
+            return error_response(msg="Participante no encontrado", code=404)
 
         # Actualizar el estado
-        user_found["estado"] = nuevo_estado
+        user_found["status"] = nuevo_estado
         self._save(users)
 
-        return {
-            "status": "ok",
-            "msg": f"Estado actualizado a {nuevo_estado} (MOCK)",
-            "data": user_found,
-        }, 200
+        return success_response(
+            msg=f"Estado actualizado a {nuevo_estado} (MOCK)",
+            data=user_found
+        )
 
     def search_by_dni(self, dni):
         """Busca un participante por DNI (versión MOCK)"""
@@ -131,10 +127,9 @@ class UserServiceMock:
         # Buscar el usuario por DNI
         for user in users:
             if user.get("dni") == dni:
-                return {
-                    "status": "ok",
-                    "msg": "Participante encontrado (MOCK)",
-                    "data": user,
-                }, 200
+                return success_response(
+                    msg="Participante encontrado (MOCK)",
+                    data=user
+                )
 
-        return {"status": "error", "msg": "Participante no encontrado"}, 404
+        return error_response(msg="Participante no encontrado", code=404)
