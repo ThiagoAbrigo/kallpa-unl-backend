@@ -1,0 +1,23 @@
+[
+    {
+        "external_id": "d2bf2c23-e03b-413c-85a7-e84192295749",
+        "program_id": 1,
+        "name": ",sdclkd",
+        "dayOfWeek": "thursday",
+        "startTime": "08:00",
+        "endTime": "09:00",
+        "maxSlots": 30
+    },
+    {
+        "external_id": "48ef0406-4cbd-4409-a8f7-1d8b8ae38f93",
+        "program_id": 1,
+        "program_name": "Programa 1",
+        "day_of_week": "monday",
+        "start_time": "08:00",
+        "end_time": "09:00",
+        "name": "prueba ",
+        "location": "Gimnasio principal ",
+        "capacity": 30,
+        "description": "hola "
+    }
+]
