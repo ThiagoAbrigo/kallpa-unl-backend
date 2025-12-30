@@ -190,5 +190,43 @@
     "address": "Av. Loja y Bolívar",
     "status": "ACTIVO",
     "type": "ESTUDIANTE"
+  },
+  {
+    "id": 31,
+    "firstName": "Lucas",
+    "lastName": "MASDA",
+    "age": null,
+    "dni": "1150464229",
+    "phone": "0963632123",
+    "email": "sin_email@registrado.com",
+    "address": "Loxaaa",
+    "status": "ACTIVO",
+    "type": "STUDENT"
+  },
+  {
+    "id": 32,
+    "firstName": "Manuel",
+    "lastName": "Corsa",
+    "age": 25,
+    "dni": "1150676829",
+    "phone": "0963632121",
+    "email": "1150676829@participante.local",
+    "address": "Lojita",
+    "status": "ACTIVO",
+    "type": "ESTUDIANTE",
+    "java_synced": false
+  },
+  {
+    "id": 33,
+    "firstName": "Miguelito",
+    "lastName": "Suarez",
+    "age": 23,
+    "dni": "1150464729",
+    "phone": "0963632123",
+    "email": "1150464729@participante.local",
+    "address": "Loxita",
+    "status": "ACTIVO",
+    "type": "ESTUDIANTE",
+    "java_synced": false
   }
 ]

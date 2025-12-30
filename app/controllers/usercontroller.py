@@ -20,3 +20,7 @@ class UserController:
 
     def search_user(self, dni):
         return user_service.search_by_dni(dni)
+
+    def search_in_java(self, dni):
+        """Busca exclusivamente en el microservicio Java."""
+        return user_service.search_in_java(dni)

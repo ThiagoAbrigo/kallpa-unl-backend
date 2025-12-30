@@ -17,6 +17,7 @@ class Participant(db.Model):
     address = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(20), nullable=False)
     type = db.Column(db.String(20), nullable=False)
+    java_external = db.Column(db.String(100), nullable=True)  # ID externo del microservicio Java
     assessments = db.relationship("Assessment", backref="participant", lazy=True)
     attendances = db.relationship("Attendance", backref="participant", lazy=True)
 

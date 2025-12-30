@@ -45,3 +45,15 @@ def buscar_usuario():
         return jsonify({"status": "error", "msg": "Falta el DNI", "code": 400}), 400
 
     return response_handler(controller.search_user(dni))
+
+
+@user_bp.route("/users/search-java", methods=["POST"])
+def buscar_usuario_java():
+    """Busca usuario exclusivamente en el microservicio Java."""
+    data = request.json
+    dni = data.get("dni")
+
+    if not dni:
+        return jsonify({"status": "error", "msg": "Falta el DNI", "code": 400}), 400
+
+    return response_handler(controller.search_in_java(dni))

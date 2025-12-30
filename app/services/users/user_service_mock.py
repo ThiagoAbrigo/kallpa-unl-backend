@@ -1,15 +1,23 @@
 import json
 import os
+from flask import request
 from app.utils.responses import success_response, error_response
+from app.services.java_sync_service import java_sync
 
 
 class UserServiceMock:
+    """Servicio de usuarios con almacenamiento mock (JSON) y sincronización con Java."""
 
     def __init__(self):
         base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         print("BASE:", base)
         self.mock_path = os.path.join(base, "mock", "users.json")
         print("MOCK PATH:", self.mock_path)
+
+    def _get_token(self):
+        """Obtiene el token del header Authorization."""
+        auth_header = request.headers.get("Authorization", "")
+        return auth_header
 
     def _load(self):
         with open(self.mock_path, "r", encoding="utf-8") as f:
@@ -23,12 +31,21 @@ class UserServiceMock:
         return self._load()
 
     def create_user(self, data):
+        """Crea usuario localmente y lo sincroniza con el microservicio Java."""
+        token = self._get_token()
         users = self._load()
 
-        # Generar nuevo ID
+        dni = data.get("dni")
+        if dni and token:
+            java_search = java_sync.search_by_identification(dni, token)
+            if java_search.get("found"):
+                return error_response(
+                    msg="Usuario ya existe en el sistema central",
+                    code=400
+                )
+
         new_id = max([u.get("id", 0) for u in users], default=0) + 1
 
-        # Crear nuevo usuario
         new_user = {
             "id": new_id,
             "firstName": data.get("firstName"),
@@ -42,20 +59,34 @@ class UserServiceMock:
             "type": data.get("type", "ESTUDIANTE"),
         }
 
+        java_result = None
+        if token:
+            if data.get("email") and data.get("password"):
+                java_result = java_sync.create_person_with_account(data, token)
+            else:
+                java_result = java_sync.create_person(data, token)
+
+            if java_result and java_result.get("success"):
+                new_user["java_synced"] = True
+                new_user["java_external"] = java_result.get("data", {}).get("external")
+            else:
+                new_user["java_synced"] = False
+                print(f"[UserServiceMock] No se pudo sincronizar con Java: {java_result}")
+
         users.append(new_user)
         self._save(users)
 
         return success_response(
-            msg="Participante registrado exitosamente (MOCK)",
+            msg="Participante registrado exitosamente (MOCK)" + (" y sincronizado con Java" if new_user.get("java_synced") else ""),
             data=new_user,
             code=201
         )
 
     def create_initiation_participant(self, data):
-        """Crea un participante de iniciación con su responsable (versión MOCK)"""
+        """Crea un participante de iniciación con su responsable y sincroniza con Java."""
+        token = self._get_token()
         users = self._load()
 
-        # Separar datos
         datos_nino = data.get("participant")
         datos_padre = data.get("responsible")
 
@@ -65,10 +96,17 @@ class UserServiceMock:
                 code=400
             )
 
-        # Generar nuevo ID
+        dni = datos_nino.get("dni")
+        if dni and token:
+            java_search = java_sync.search_by_identification(dni, token)
+            if java_search.get("found"):
+                return error_response(
+                    msg="Participante ya existe en el sistema central",
+                    code=400
+                )
+
         new_id = max([u.get("id", 0) for u in users], default=0) + 1
 
-        # Crear participante de iniciación
         new_participant = {
             "id": new_id,
             "firstName": datos_nino.get("firstName"),
@@ -88,20 +126,36 @@ class UserServiceMock:
             },
         }
 
+        if token:
+            java_data = {
+                "firstName": datos_nino.get("firstName"),
+                "lastName": datos_nino.get("lastName"),
+                "dni": datos_nino.get("dni"),
+                "phone": datos_nino.get("phone", ""),
+                "address": datos_nino.get("address", ""),
+                "type": "INICIACION",
+            }
+            java_result = java_sync.create_person(java_data, token)
+            if java_result and java_result.get("success"):
+                new_participant["java_synced"] = True
+                new_participant["java_external"] = java_result.get("data", {}).get("external")
+            else:
+                new_participant["java_synced"] = False
+
         users.append(new_participant)
         self._save(users)
 
         return success_response(
-            msg="Participante de iniciación y responsable registrados correctamente (MOCK)",
+            msg="Participante de iniciación y responsable registrados correctamente (MOCK)" + (" y sincronizado con Java" if new_participant.get("java_synced") else ""),
             data=new_participant,
             code=201
         )
 
     def change_status(self, user_id, nuevo_estado):
-        """Cambia el estado de un participante (versión MOCK)"""
+        """Cambia el estado de un participante y sincroniza con Java."""
+        token = self._get_token()
         users = self._load()
 
-        # Buscar el usuario por ID
         user_found = None
         for user in users:
             if user.get("id") == user_id:
@@ -111,9 +165,16 @@ class UserServiceMock:
         if not user_found:
             return error_response(msg="Participante no encontrado", code=404)
 
-        # Actualizar el estado
         user_found["status"] = nuevo_estado
         self._save(users)
+
+        java_external = user_found.get("java_external")
+        if token and java_external:
+            java_result = java_sync.change_state(java_external, token)
+            if java_result and java_result.get("success"):
+                print(f"[UserServiceMock] Estado sincronizado con Java para {java_external}")
+            else:
+                print(f"[UserServiceMock] No se pudo sincronizar estado con Java: {java_result}")
 
         return success_response(
             msg=f"Estado actualizado a {nuevo_estado} (MOCK)",
@@ -121,10 +182,18 @@ class UserServiceMock:
         )
 
     def search_by_dni(self, dni):
-        """Busca un participante por DNI (versión MOCK)"""
-        users = self._load()
+        """Busca un participante por DNI, primero en Java y luego local."""
+        token = self._get_token()
 
-        # Buscar el usuario por DNI
+        if token:
+            java_result = java_sync.search_by_identification(dni, token)
+            if java_result.get("found"):
+                return success_response(
+                    msg="Participante encontrado (Java)",
+                    data=java_result.get("data")
+                )
+
+        users = self._load()
         for user in users:
             if user.get("dni") == dni:
                 return success_response(
@@ -133,3 +202,19 @@ class UserServiceMock:
                 )
 
         return error_response(msg="Participante no encontrado", code=404)
+
+    def search_in_java(self, dni):
+        """Busca exclusivamente en el microservicio Java."""
+        token = self._get_token()
+
+        if not token:
+            return error_response(msg="Token requerido para buscar en Java", code=401)
+
+        java_result = java_sync.search_by_identification(dni, token)
+        if java_result.get("found"):
+            return success_response(
+                msg="Participante encontrado en Java",
+                data=java_result.get("data")
+            )
+
+        return error_response(msg="Participante no encontrado en Java", code=404)
