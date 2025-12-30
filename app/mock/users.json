@@ -1,150 +1,194 @@
 [
   {
     "id": 1,
-    "nombre": "Joseph Balcazar",
+    "firstName": "Joseph",
+    "lastName": "Balcazar",
     "email": "joseph@example.com",
-    "rol": "participante"
+    "dni": null,
+    "phone": null,
+    "age": null,
+    "address": null,
+    "status": "ACTIVO",
+    "type": "PARTICIPANTE"
   },
   {
     "id": 2,
-    "nombre": "Joseph Balcazar",
+    "firstName": "Joseph",
+    "lastName": "Balcazar",
     "email": "joseph@example.com",
-    "rol": "participante"
+    "dni": null,
+    "phone": null,
+    "age": null,
+    "address": null,
+    "status": "ACTIVO",
+    "type": "PARTICIPANTE"
   },
   {
     "id": 3,
-    "nombre": "Joseph Balcazar",
+    "firstName": "Joseph",
+    "lastName": "Balcazar",
     "email": "joseph@example.com",
-    "rol": "participante"
+    "dni": null,
+    "phone": null,
+    "age": null,
+    "address": null,
+    "status": "ACTIVO",
+    "type": "PARTICIPANTE"
   },
   {
     "id": 4,
-    "nombre": "Cristian Ajila",
+    "firstName": "Cristian",
+    "lastName": "Ajila",
     "email": "cristian@example.com",
-    "rol": "docente"
+    "dni": null,
+    "phone": null,
+    "age": null,
+    "address": null,
+    "status": "ACTIVO",
+    "type": "DOCENTE"
   },
   {
     "id": 5,
-    "nombre": "Elias Poma",
+    "firstName": "Elias",
+    "lastName": "Poma",
     "email": "elias@example.com",
-    "rol": "pasante"
+    "dni": null,
+    "phone": null,
+    "age": null,
+    "address": null,
+    "status": "ACTIVO",
+    "type": "PASANTE"
   },
   {
     "id": 6,
-    "nombre": "Santiago Abrigo",
+    "firstName": "Santiago",
+    "lastName": "Abrigo",
     "email": "santiago@example.com",
-    "rol": "administrativo"
+    "dni": null,
+    "phone": null,
+    "age": null,
+    "address": null,
+    "status": "ACTIVO",
+    "type": "ADMINISTRATIVO"
   },
   {
     "id": 7,
-    "nombre": "Carlos",
-    "apellido": "Vargas",
-    "edad": 22,
+    "firstName": "Carlos",
+    "lastName": "Vargas",
+    "age": 22,
     "dni": "1104005001",
-    "telefono": "0991234567",
-    "correo": "carlos.vargas@ejemplo.com",
-    "direccion": "Av. Universitaria",
-    "estado": "ACTIVO",
-    "tipo": "ESTUDIANTE"
+    "phone": "0991234567",
+    "email": "carlos.vargas@ejemplo.com",
+    "address": "Av. Universitaria",
+    "status": "ACTIVO",
+    "type": "ESTUDIANTE"
   },
   {
     "id": 8,
-    "nombre": "Pedrito",
-    "apellido": "González",
-    "edad": 8,
+    "firstName": "Pedrito",
+    "lastName": "González",
+    "age": 8,
     "dni": "1100000001",
-    "telefono": "",
-    "correo": "",
-    "direccion": "Loja Centro",
-    "estado": "ACTIVO",
-    "tipo": "INICIACION",
-    "responsable": {
-      "nombre": "María",
-      "apellido": "González",
+    "phone": "",
+    "email": "",
+    "address": "Loja Centro",
+    "status": "ACTIVO",
+    "type": "INICIACION",
+    "responsible": {
+      "name": "María González",
       "dni": "1100000002",
-      "telefono": "0991234567",
-      "parentesco": "Madre"
+      "phone": "0991234567",
+      "relationship": "MADRE"
     }
   },
   {
     "id": 9,
-    "nombre": "Pedrito",
-    "apellido": "González",
-    "edad": 8,
+    "firstName": "Pedrito",
+    "lastName": "González",
+    "age": 8,
     "dni": "1100000001",
-    "telefono": "",
-    "correo": "",
-    "direccion": "Loja Centro",
-    "estado": "ACTIVO",
-    "tipo": "INICIACION",
-    "responsable": {
-      "nombre": "María",
-      "apellido": "González",
+    "phone": "",
+    "email": "",
+    "address": "Loja Centro",
+    "status": "ACTIVO",
+    "type": "INICIACION",
+    "responsible": {
+      "name": "María González",
       "dni": "1100000002",
-      "telefono": "0991234567",
-      "parentesco": "Madre"
+      "phone": "0991234567",
+      "relationship": "MADRE"
     }
   },
   {
     "id": 10,
-    "nombre": "Carlos",
-    "apellido": "Varg",
-    "edad": 21,
+    "firstName": "Carlos",
+    "lastName": "Varg",
+    "age": 21,
     "dni": "1104005002",
-    "telefono": "0991234565",
-    "correo": "carlos.vargas@ejempo.com",
-    "direccion": "Av. Universitaia",
-    "estado": "ACTIVO",
-    "tipo": "ESTUDIANTE"
+    "phone": "0991234565",
+    "email": "carlos.vargas@ejempo.com",
+    "address": "Av. Universitaia",
+    "status": "ACTIVO",
+    "type": "ESTUDIANTE"
   },
   {
     "id": 11,
-    "nombre": "Juan",
-    "apellido": "Pérez",
-    "edad": 25,
+    "firstName": "Juan",
+    "lastName": "Pérez",
+    "age": 25,
     "dni": "1104000001",
-    "telefono": "0991234567",
-    "correo": "juan.perez@unl.edu.ec",
-    "direccion": "San Sebastián",
-    "estado": "ACTIVO",
-    "tipo": "ESTUDIANTE"
+    "phone": "0991234567",
+    "email": "juan.perez@unl.edu.ec",
+    "address": "San Sebastián",
+    "status": "ACTIVO",
+    "type": "ESTUDIANTE"
   },
   {
     "id": 12,
-    "nombre": "Kevin",
-    "apellido": "Niño",
-    "edad": 10,
+    "firstName": "Kevin",
+    "lastName": "Niño",
+    "age": 10,
     "dni": "1105000002",
-    "telefono": "",
-    "correo": "",
-    "direccion": "El Valle",
-    "estado": "ACTIVO",
-    "tipo": "INICIACION",
-    "responsable": {
-      "nombre": "Padre de Kevin",
-      "apellido": "Niño",
+    "phone": "",
+    "email": "",
+    "address": "El Valle",
+    "status": "ACTIVO",
+    "type": "INICIACION",
+    "responsible": {
+      "name": "Padre de Kevin",
       "dni": "1105000099",
-      "telefono": "0999999999",
-      "parentesco": "Padre"
+      "phone": "0999999999",
+      "relationship": "PADRE"
     }
   },
   {
     "id": 13,
-    "nombre": "Kevin",
-    "apellido": "Niño",
-    "edad": 10,
+    "firstName": "Kevin",
+    "lastName": "Niño",
+    "age": 10,
     "dni": "1105000002",
-    "telefono": "",
-    "correo": "",
-    "direccion": "El Valle",
-    "estado": "ACTIVO",
-    "tipo": "INICIACION",
-    "responsable": {
-      "nombre": "Padre de Kevin",
-      "apellido": "Niño",
+    "phone": "",
+    "email": "",
+    "address": "El Valle",
+    "status": "ACTIVO",
+    "type": "INICIACION",
+    "responsible": {
+      "name": "Padre de Kevin",
       "dni": "1105000099",
-      "telefono": "0999999999",
-      "parentesco": "Padre"
+      "phone": "0999999999",
+      "relationship": "PADRE"
     }
+  },
+  {
+    "id": 30,
+    "firstName": "María",
+    "lastName": "González",
+    "age": 23,
+    "dni": "1104556789",
+    "phone": "0991234567",
+    "email": "maria.gonzalez@ejemplo.com",
+    "address": "Av. Loja y Bolívar",
+    "status": "ACTIVO",
+    "type": "ESTUDIANTE"
   }
 ]

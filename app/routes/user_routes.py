@@ -12,7 +12,13 @@ def response_handler(result):
 
 @user_bp.route("/users", methods=["GET"])
 def listar_users():
-    return response_handler(controller.get_users())
+    result = controller.get_users()
+    
+    if isinstance(result, list):
+        return jsonify({"status": "ok", "data": result}), 200
+    # ------------------------------------------
+
+    return response_handler(result)
 
 @user_bp.route("/users", methods=["POST"])
 def crear_user():
