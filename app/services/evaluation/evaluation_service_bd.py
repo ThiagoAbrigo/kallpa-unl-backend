@@ -178,9 +178,8 @@ class EvaluationServiceDB:
             db.session.rollback()
             return error_response(f"Internal error: {str(e)}", 500)
 
-    # ===============================
+    
     # HISTORIAL / COMPARACIÓN
-    # ===============================
     def get_history(self, participant_external_id, test_external_id, months=6):
         try:
             if not participant_external_id:
