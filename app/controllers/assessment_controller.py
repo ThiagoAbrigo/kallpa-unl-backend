@@ -10,3 +10,8 @@ class AssessmentController:
 
     def update(self, external_id, data):
         return assessment_service.update_assessment(external_id, data)
+    
+    def get_participants_external_id(self, participant_external_id):
+        return assessment_service.get_assessments_by_participant_external_id(
+            participant_external_id
+        )

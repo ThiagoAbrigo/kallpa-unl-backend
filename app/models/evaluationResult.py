@@ -16,6 +16,5 @@ class EvaluationResult(db.Model):
         db.Integer, db.ForeignKey("test_exercise.id"), nullable=False
     )
     value = db.Column(db.Float, nullable=False)
-    observation = db.Column(db.String(255))
-
+    
     exercise = db.relationship("TestExercise")

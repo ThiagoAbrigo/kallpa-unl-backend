@@ -17,6 +17,7 @@ class UserServiceDB:
                     "lastName": p.lastName,
                     "email": p.email,
                     "dni": p.dni,
+                    "age": p.age,
                     "status": p.status,
                     "type": p.type,
                 }
@@ -30,15 +31,15 @@ class UserServiceDB:
     def create_user(self, data):
         try:
             participant = Participant(
-                firstName=data.get("nombre"),
-                lastName=data.get("apellido"),
-                age=data.get("edad"),
+                firstName=data.get("firstName"),
+                lastName=data.get("lastName"),
+                age=data.get("age"),
                 dni=data.get("dni"),
-                phone=data.get("telefono"),
-                email=data.get("correo"),
-                address=data.get("direccion"),
+                phone=data.get("phone"),
+                email=data.get("email"),
+                address=data.get("address"),
                 status="ACTIVO",
-                type=data.get("tipo", "EXTERNO"),
+                type=data.get("type", "EXTERNO"),
             )
             db.session.add(participant)
             db.session.commit()
@@ -59,8 +60,8 @@ class UserServiceDB:
     def create_initiation_participant(self, data):
         """Crea un participante de iniciación con su responsable"""
         try:
-            datos_nino = data.get("participante")
-            datos_responsable = data.get("responsable")
+            datos_nino = data.get("participant")
+            datos_responsable = data.get("responsible")
 
             if not datos_nino or not datos_responsable:
                 return error_response(
@@ -68,20 +69,20 @@ class UserServiceDB:
                 )
 
             # 1. Crear participante (niño)
-            email = datos_nino.get("correo")
+            email = datos_nino.get("email")
 
             # 🔑 convertir string vacío a None
             if email == "":
                 email = None
 
             participant = Participant(
-                firstName=datos_nino.get("nombre"),
-                lastName=datos_nino.get("apellido"),
-                age=datos_nino.get("edad"),
+                firstName=datos_nino.get("firstName"),
+                lastName=datos_nino.get("lastName"),
+                age=datos_nino.get("age"),
                 dni=datos_nino.get("dni"),
-                phone=datos_nino.get("telefono"),
+                phone=datos_nino.get("phone"),
                 email=email,
-                address=datos_nino.get("direccion"),
+                address=datos_nino.get("address"),
                 status="ACTIVO",
                 type="INICIACION",
             )
@@ -91,9 +92,9 @@ class UserServiceDB:
 
             # 2. Crear responsable
             responsible = Responsible(
-                name=datos_responsable.get("nombre"),
+                name=datos_responsable.get("name"),
                 dni=datos_responsable.get("dni"),
-                phone=datos_responsable.get("telefono"),
+                phone=datos_responsable.get("phone"),
                 participant_id=participant.id,
             )
 

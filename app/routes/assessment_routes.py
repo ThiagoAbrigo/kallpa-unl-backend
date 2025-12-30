@@ -23,3 +23,7 @@ def list_evaluation():
 def update_evaluation(external_id):
     data = request.json
     return response_handler(controller.update(external_id, data))
+
+@assessment_bp.route("/participants/<string:participant_external_id>/assessments", methods=["GET"])
+def search_evaluation(participant_external_id):
+    return response_handler(controller.get_participants_external_id(participant_external_id))

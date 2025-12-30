@@ -29,6 +29,7 @@ class AssessmentServiceDB:
                     "external_id": a.external_id,
                     "participant_external_id": a.participant.external_id,
                     "participant_name": f"{a.participant.firstName} {a.participant.lastName}",
+                    "dni": a.participant.dni,
                     "age": a.participant.age,
                     "date": a.date,
                     "weight": a.weight,
@@ -156,3 +157,52 @@ class AssessmentServiceDB:
         except Exception as e:
             db.session.rollback()
             return error_response(msg=f"Error interno del servidor: {str(e)}", code=500)
+
+    def get_assessments_by_participant_external_id(self, participant_external_id):
+        try:
+            participant = Participant.query.filter_by(
+                external_id=participant_external_id
+            ).first()
+
+            if not participant:
+                return error_response(
+                    msg="Participante no encontrado",
+                    code=404
+                )
+
+            assessments = (
+                Assessment.query
+                .filter_by(participant_id=participant.id)
+                .order_by(Assessment.date.desc())
+                .all()
+            )
+
+            data = [
+                {
+                    "external_id": a.external_id,
+                    "date": a.date,
+                    "weight": a.weight,
+                    "height": a.height,
+                    "waistPerimeter": a.waistPerimeter,
+                    "wingspan": a.wingspan,
+                    "bmi": a.bmi,
+                    "status": a.status
+                }
+                for a in assessments
+            ]
+
+            return success_response(
+                msg="Evaluaciones del participante listadas correctamente",
+                data={
+                    "participant": {
+                        "external_id": participant.external_id,
+                        "firstName": f"{participant.firstName} {participant.lastName}",
+                        "dni": participant.dni,
+                        "age": participant.age
+                    },
+                    "assessments": data
+                }
+            )
+
+        except Exception as e:
+            return error_response(msg=str(e), code=500)

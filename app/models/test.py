@@ -12,6 +12,5 @@ class Test(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(255))
     frequency_months = db.Column(db.Integer, nullable=False)  # 3 o 6 meses
-    is_active = db.Column(db.Boolean, default=True)
-
+    status = db.Column(db.String(30), nullable=False, default="Activo")
     exercises = db.relationship("TestExercise", backref="test", lazy=True)

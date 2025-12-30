@@ -8,5 +8,25 @@
         "waistPerimeter": 80,
         "wingspan": 175,
         "bmi": 22.86
+    },
+    {
+        "external_id": "c30c1e27-b073-496f-b8b5-b8fb4c9499b6",
+        "participant_external_id": "7",
+        "date": "2025-12-10",
+        "weight": 60,
+        "height": 160,
+        "waistPerimeter": 50,
+        "wingspan": 25,
+        "bmi": 0.0
+    },
+    {
+        "external_id": "ba0831e7-cc8c-4fe3-b9c5-62840105506f",
+        "participant_external_id": "undefined",
+        "date": "",
+        "weight": 0,
+        "height": 0,
+        "waistPerimeter": 0,
+        "wingspan": 0,
+        "bmi": 0
     }
 ]

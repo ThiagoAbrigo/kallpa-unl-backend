@@ -14,7 +14,7 @@ def create_app():
         from app import models
         db.create_all()
         
-        # Register blueprints
+        # register blueprints
         from app.routes.user_routes import user_bp
         app.register_blueprint(user_bp, url_prefix='/api')
         from app.routes.attendance_routes import attendance_bp
@@ -25,5 +25,4 @@ def create_app():
         app.register_blueprint(assessment_bp, url_prefix='/api')
         from app.routes.evaluation_routes import evaluation_bp
         app.register_blueprint(evaluation_bp, url_prefix='/api')
-
     return app
