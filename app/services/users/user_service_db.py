@@ -278,3 +278,125 @@ class UserServiceDB:
             )
 
         return error_response(msg="Participante no encontrado en Java", code=404)
+
+    #Revisar Josep
+    def create_participant(self, data):
+        token = self._get_token()
+ 
+        try:
+            is_minor = data.get("type") == "INICIACION" or data.get("age", 0) < 18
+
+            participant_data = data.get("participant") if is_minor else data
+            responsible_data = data.get("responsible") if is_minor else None
+
+            # 1. Validaciones
+            self._validate_participant(participant_data, responsible_data, is_minor)
+
+            # 2. Verificar en Java
+            self._check_java_duplicate(participant_data, token)
+
+            # 3. Crear participante
+            participant = self._build_participant(participant_data, is_minor)
+            db.session.add(participant)
+
+            # # 4. Sincronizar Java
+            # self._sync_with_java(participant, participant_data, token, is_minor)
+
+            # db.session.add(participant)
+            # db.session.flush()
+
+            # 5. Responsable (solo iniciación)
+            responsible = None
+            if is_minor:
+                responsible = self._create_responsible(responsible_data, participant)
+
+            db.session.commit()
+            try:
+                self._sync_with_java(participant, participant_data, token, is_minor)
+            except Exception as e:
+                print(f"[Warning] Error sincronizando con Java: {e}")
+                
+            return success_response(
+                msg="Participante registrado correctamente",
+                data={
+                    "participant_external_id": participant.external_id,
+                    "responsible_external_id": responsible.external_id if responsible else None,
+                },
+            )
+
+        except Exception as e:
+            db.session.rollback()
+            return error_response(str(e), 500)
+
+    def _validate_participant(self, participant, responsible, is_minor):
+        if not participant:
+            raise Exception("Datos del participante incompletos")
+
+        if is_minor and not responsible:
+            raise Exception("Se requieren datos del responsable")
+    
+    def _build_participant(self, data, is_minor):
+        return Participant(
+            firstName=data.get("firstName"),
+            lastName=data.get("lastName"),
+            age=data.get("age"),
+            dni=data.get("dni"),
+            phone=data.get("phone"),
+            email=data.get("email") or None,
+            address=data.get("address"),
+            status="ACTIVO",
+            type="INICIACION" if is_minor else data.get("type", "EXTERNO"),
+        )
+
+    def _create_responsible(self, data, participant):
+        responsible = Responsible(
+            name=data.get("name"),
+            dni=data.get("dni"),
+            phone=data.get("phone"),
+            participant_id=participant.id,
+        )
+        db.session.add(responsible)
+        return responsible
+
+    def _check_java_duplicate(self, participant_data, token):
+        if not token:
+            return
+
+        dni = participant_data.get("dni")
+        if not dni:
+            return
+
+        java_search = java_sync.search_by_identification(dni, token)
+        if java_search.get("found"):
+            raise Exception("Participante ya existe en el sistema central")
+    
+    def _sync_with_java(self, participant, participant_data, token, is_minor):
+        if not token:
+            return
+
+        email = participant_data.get("email")
+        password = participant_data.get("password")
+
+        if not email:
+            email = f"{participant_data.get('dni')}@kallpa.system"
+
+        if not password:
+            password = str(uuid.uuid4())[:8]
+
+        java_data = {
+            "firstName": participant_data.get("firstName"),
+            "lastName": participant_data.get("lastName"),
+            "dni": participant_data.get("dni"),
+            "phone": participant_data.get("phone", ""),
+            "address": participant_data.get("address", ""),
+            "type": "INICIACION" if is_minor else participant_data.get("type", "EXTERNO"),
+            "email": email,
+            "password": password,
+        }
+
+        java_result = java_sync.create_person_with_account(java_data, token)
+
+        if java_result and java_result.get("success"):
+            participant.java_external = java_result.get("data", {}).get("external")
+
+

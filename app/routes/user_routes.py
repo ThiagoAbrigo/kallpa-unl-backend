@@ -13,11 +13,6 @@ def response_handler(result):
 @user_bp.route("/users", methods=["GET"])
 def listar_users():
     result = controller.get_users()
-    
-    if isinstance(result, list):
-        return jsonify({"status": "ok", "data": result}), 200
-    # ------------------------------------------
-
     return response_handler(result)
 
 @user_bp.route("/users", methods=["POST"])
@@ -57,3 +52,11 @@ def buscar_usuario_java():
         return jsonify({"status": "error", "msg": "Falta el DNI", "code": 400}), 400
 
     return response_handler(controller.search_in_java(dni))
+
+# Revisar Josep
+@user_bp.route("/save-participants", methods=["POST"])
+def create_participant():
+    data = request.get_json(silent=True) or {}
+    return response_handler(
+        controller.create_participant(data)
+    )

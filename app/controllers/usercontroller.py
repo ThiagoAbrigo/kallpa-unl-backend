@@ -24,3 +24,12 @@ class UserController:
     def search_in_java(self, dni):
         """Busca exclusivamente en el microservicio Java."""
         return user_service.search_in_java(dni)
+
+    #Revisar Josep
+    def create_participant(self, data):
+        """
+        Registra un participante (mayor o menor de edad).
+        Si es menor, espera datos de responsable.
+        """
+        return user_service.create_participant(data)
+
