@@ -240,30 +240,59 @@ class AttendanceServiceMock:
         """Obtener las sesiones programadas para hoy (MOCK)"""
         try:
             schedules = self._load(self.schedules_path)
+            registros = self._load()
+            participants = self._load(self.participants_path)
             hoy = date.today().isoformat()
             
             # Mapear día de la semana
             dias_semana = {
+                0: "monday", 1: "tuesday", 2: "wednesday", 
+                3: "thursday", 4: "friday", 5: "saturday", 6: "sunday"
+            }
+            dias_semana_es = {
                 0: "Lunes", 1: "Martes", 2: "Miércoles", 
                 3: "Jueves", 4: "Viernes", 5: "Sábado", 6: "Domingo"
             }
-            dia_hoy = dias_semana.get(date.today().weekday(), "")
+            dia_hoy_en = dias_semana.get(date.today().weekday(), "")
+            dia_hoy_es = dias_semana_es.get(date.today().weekday(), "")
             
             # Filtrar schedules del día de hoy
-            sesiones_hoy = [s for s in schedules if s.get("dayOfWeek", "").lower() == dia_hoy.lower()]
+            sesiones_hoy = []
+            for s in schedules:
+                day = (s.get("dayOfWeek") or s.get("day_of_week") or "").lower()
+                if day == dia_hoy_en:
+                    # Contar asistencias de esta sesión para hoy
+                    schedule_id = s.get("external_id")
+                    asistencias_sesion = [r for r in registros 
+                                         if r.get("schedule_external_id") == schedule_id and r.get("date") == hoy]
+                    presentes = len([a for a in asistencias_sesion if a.get("status") == "present"])
+                    
+                    sesion = {
+                        "id": s.get("id", 0),
+                        "schedule_id": schedule_id,
+                        "external_id": schedule_id,
+                        "name": s.get("name", ""),
+                        "start_time": s.get("startTime") or s.get("start_time", ""),
+                        "end_time": s.get("endTime") or s.get("end_time", ""),
+                        "program_name": s.get("program_name", ""),
+                        "location": s.get("location", ""),
+                        "attendance_count": presentes,
+                        "participant_count": len(participants)  # Total de participantes
+                    }
+                    sesiones_hoy.append(sesion)
             
             return success_response(
                 msg="Sesiones de hoy obtenidas correctamente (MOCK)",
                 data={
                     "date": hoy,
-                    "day": dia_hoy,
+                    "day": dia_hoy_es,
                     "sessions": sesiones_hoy
                 }
             )
         except Exception as e:
             return error_response(f"Error interno: {e}")
 
-    def obtener_historial(self, date_from=None, date_to=None):
+    def obtener_historial(self, date_from=None, date_to=None, schedule_id=None):
         """Obtener historial de asistencias con rango de fechas (MOCK)"""
         try:
             registros = self._load()
@@ -280,30 +309,36 @@ class AttendanceServiceMock:
             if date_to:
                 registros = [r for r in registros if r.get("date", "") <= date_to]
             
-            # Enriquecer los registros con datos de participante y schedule
-            historial = []
+            # Filtrar por schedule_id si se proporciona
+            if schedule_id:
+                registros = [r for r in registros if r.get("schedule_external_id") == schedule_id]
+            
+            # Agrupar por schedule_id y fecha para el formato esperado por el frontend
+            agrupado = {}
             for r in registros:
-                participant = participants_dict.get(r.get("participant_external_id"), {})
-                schedule = schedules_dict.get(r.get("schedule_external_id"), {})
-                
-                historial.append({
-                    "external_id": r.get("external_id"),
-                    "date": r.get("date"),
-                    "status": r.get("status"),
-                    "participant": {
-                        "external_id": participant.get("external_id"),
-                        "firstName": participant.get("firstName", ""),
-                        "lastName": participant.get("lastName", ""),
-                        "dni": participant.get("dni", "")
-                    },
-                    "schedule": {
-                        "external_id": schedule.get("external_id"),
-                        "name": schedule.get("name", ""),
-                        "dayOfWeek": schedule.get("dayOfWeek") or schedule.get("day_of_week", ""),
-                        "startTime": schedule.get("startTime") or schedule.get("start_time", ""),
-                        "endTime": schedule.get("endTime") or schedule.get("end_time", "")
+                key = f"{r.get('schedule_external_id')}_{r.get('date')}"
+                if key not in agrupado:
+                    schedule = schedules_dict.get(r.get("schedule_external_id"), {})
+                    agrupado[key] = {
+                        "schedule_id": r.get("schedule_external_id"),
+                        "schedule_name": schedule.get("name", ""),
+                        "date": r.get("date"),
+                        "start_time": schedule.get("startTime") or schedule.get("start_time", ""),
+                        "end_time": schedule.get("endTime") or schedule.get("end_time", ""),
+                        "presentes": 0,
+                        "ausentes": 0,
+                        "total": 0
                     }
-                })
+                
+                agrupado[key]["total"] += 1
+                if r.get("status") == "present":
+                    agrupado[key]["presentes"] += 1
+                else:
+                    agrupado[key]["ausentes"] += 1
+            
+            historial = list(agrupado.values())
+            # Ordenar por fecha descendente
+            historial.sort(key=lambda x: x.get("date", ""), reverse=True)
             
             return success_response(
                 msg="Historial obtenido correctamente (MOCK)",
@@ -450,16 +485,26 @@ class AttendanceServiceMock:
             asistencias = [r for r in registros 
                          if r.get("schedule_external_id") == schedule_id and r.get("date") == fecha]
             
-            # Crear diccionario de participantes
+            # Crear diccionarios de participantes (por external_id y por índice numérico)
             participants_dict = {p.get("external_id"): p for p in participants}
+            # También indexar por número (1, 2, 3...) para compatibilidad con datos antiguos
+            for i, p in enumerate(participants, start=1):
+                participants_dict[str(i)] = p
             
             records = []
             for a in asistencias:
-                participant = participants_dict.get(a.get("participant_external_id"), {})
+                participant_id = a.get("participant_external_id")
+                participant = participants_dict.get(participant_id, {})
+                
+                # Obtener nombre del participante (soportar firstName/lastName o first_name/last_name)
+                first_name = participant.get('firstName') or participant.get('first_name', '')
+                last_name = participant.get('lastName') or participant.get('last_name', '')
+                full_name = f"{first_name} {last_name}".strip()
+                
                 records.append({
                     "external_id": a.get("external_id"),
-                    "participant_id": a.get("participant_external_id"),
-                    "participant_name": f"{participant.get('firstName', '')} {participant.get('lastName', '')}".strip(),
+                    "participant_id": participant_id,
+                    "participant_name": full_name if full_name else f"Participante {participant_id}",
                     "dni": participant.get("dni", ""),
                     "status": a.get("status", "").upper()
                 })

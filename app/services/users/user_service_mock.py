@@ -29,7 +29,11 @@ class UserServiceMock:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     def get_all_users(self):
-        return self._load()
+        users = self._load()
+        return success_response(
+            msg="Usuarios obtenidos correctamente (MOCK)",
+            data=users
+        )
 
     def create_user(self, data):
         """Crea usuario localmente y lo sincroniza con el microservicio Java."""

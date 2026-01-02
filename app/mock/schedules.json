@@ -19,5 +19,29 @@
         "location": "Gimnasio principal ",
         "capacity": 30,
         "description": "hola "
+    },
+    {
+        "external_id": "df30650d-9d53-42ba-9735-7717b58ede56",
+        "program_id": 1,
+        "program_name": "Programa 1",
+        "day_of_week": "monday",
+        "start_time": "08:00",
+        "end_time": "09:00",
+        "name": "Funcional ",
+        "location": "Gimnasio principal ",
+        "capacity": 30,
+        "description": "hola"
+    },
+    {
+        "external_id": "310b35ea-fe33-46bf-870c-2110d3647487",
+        "program_id": 1,
+        "program_name": "Programa 1",
+        "day_of_week": "friday",
+        "start_time": "08:00",
+        "end_time": "09:00",
+        "name": "Funcional ",
+        "location": "scas",
+        "capacity": 30,
+        "description": "mkjk"
     }
 ]

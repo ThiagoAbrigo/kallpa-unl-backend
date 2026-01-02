@@ -152,3 +152,75 @@ def eliminar_asistencia_sesion(schedule_id, date):
     """Eliminar asistencia de una sesión específica"""
     result = controller.eliminar_asistencia_sesion(schedule_id, date)
     return response_handler(result)
+
+
+# ========== RUTAS SIMPLIFICADAS PARA EL NUEVO FRONTEND ==========
+# Estas rutas son más simples y coinciden con lo que espera el nuevo frontend
+
+@attendance_bp.route("/attendance/schedules", methods=["GET"])
+def obtener_schedules_simple():
+    """Obtener todos los horarios (ruta simplificada)"""
+    result = controller.obtener_schedules()
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/schedules", methods=["POST"])
+def crear_schedule_simple():
+    """Crear un nuevo horario (ruta simplificada)"""
+    data = request.json
+    result = controller.crear_schedule(data)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/schedules/<schedule_id>", methods=["PUT"])
+def actualizar_schedule_simple(schedule_id):
+    """Actualizar un horario (ruta simplificada)"""
+    data = request.json
+    result = controller.actualizar_schedule(schedule_id, data)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/schedules/<schedule_id>", methods=["DELETE"])
+def eliminar_schedule_simple(schedule_id):
+    """Eliminar un horario (ruta simplificada)"""
+    result = controller.eliminar_schedule(schedule_id)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/sessions/today", methods=["GET"])
+def obtener_sesiones_hoy_simple():
+    """Obtener sesiones de hoy (ruta simplificada)"""
+    result = controller.obtener_sesiones_hoy()
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/register", methods=["POST"])
+def registrar_asistencia_simple():
+    """Registrar asistencia masiva (ruta simplificada)"""
+    data = request.json
+    result = controller.registrar_asistencia_publica(data)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/history", methods=["GET"])
+def obtener_historial_simple():
+    """Obtener historial de asistencias (ruta simplificada)"""
+    start_date = request.args.get("startDate") or request.args.get("date_from")
+    end_date = request.args.get("endDate") or request.args.get("date_to")
+    schedule_id = request.args.get("scheduleId")
+    result = controller.obtener_historial(start_date, end_date, schedule_id)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/session/<schedule_id>/<date>", methods=["GET"])
+def obtener_detalle_sesion_simple(schedule_id, date):
+    """Obtener detalle de una sesión específica (ruta simplificada)"""
+    result = controller.obtener_detalle_sesion(schedule_id, date)
+    return response_handler(result)
+
+
+@attendance_bp.route("/attendance/session/<schedule_id>/<date>", methods=["DELETE"])
+def eliminar_asistencia_sesion_simple(schedule_id, date):
+    """Eliminar registro de asistencia de una fecha (ruta simplificada)"""
+    result = controller.eliminar_asistencia_sesion(schedule_id, date)
+    return response_handler(result)
