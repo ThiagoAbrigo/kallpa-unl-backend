@@ -9,14 +9,7 @@ def create_app():
     app = Flask(__name__, instance_relative_config=False)
     app.config.from_object(Config)
     db.init_app(app)
-    
-    # Configuración completa de CORS
-    CORS(app, 
-         origins=["http://localhost:3000", "http://localhost:4200", "http://localhost:3001", "http://localhost:8080"],
-         supports_credentials=True,
-         allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-         expose_headers=["Content-Type", "Authorization"])
+    CORS(app, origins=["http://localhost:3000", "http://localhost:4200", "http://localhost:3001", "http://localhost:8080"], supports_credentials=True)
     
     with app.app_context():
         from app import models
