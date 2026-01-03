@@ -468,14 +468,13 @@ class UserServiceDB:
                 role=data["role"],
                 status="ACTIVO",
             )
-
             db.session.add(user)
             db.session.commit()
 
             return {
                 "status": "success",
                 "msg": "Usuario registrado correctamente",
-                "code": 201,
+                "code": 200,
                 "data": {"external_id": user.external_id, "role": user.role},
             }
 
