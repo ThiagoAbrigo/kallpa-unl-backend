@@ -1,11 +1,5 @@
 import os
 from os import path
-from dotenv import load_dotenv
-
-# Cargar .env antes de leer USE_MOCK
-config_dir = path.abspath(path.dirname(__file__))
-base_dir = path.abspath(path.join(config_dir, '..', '..'))
-load_dotenv(path.join(base_dir, '.env'))
 
 # USERS
 from app.services.users.user_service_mock import UserServiceMock
