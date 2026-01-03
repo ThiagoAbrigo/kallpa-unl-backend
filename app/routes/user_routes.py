@@ -1,9 +1,11 @@
 from flask import Blueprint, jsonify, request
-from app.utils.jwt_required import jwt_required
+from app.utils.jwt_required import jwt_required, get_jwt_identity
 from app.controllers.usercontroller import UserController
+from app.services.users.user_service_db import UserServiceDB
 
 user_bp = Blueprint("users", __name__)
 controller = UserController()
+user_service = UserServiceDB()
 
 
 def response_handler(result):
@@ -81,3 +83,34 @@ def create_user():
     data = request.get_json(silent=True) or {}
 
     return response_handler(controller.create_user(data))
+
+
+@user_bp.route('/users/profile', methods=['PUT'])
+@jwt_required
+def update_user_profile():
+    """Actualiza el perfil del usuario autenticado."""
+    try:
+        # 1. Obtener ID del usuario del token
+        current_user_id = get_jwt_identity()
+        
+        if not current_user_id:
+            return jsonify({"status": "error", "msg": "No se pudo identificar al usuario", "code": 401}), 401
+        
+        # 2. Obtener el token real para reenviarlo a Java
+        token = request.headers.get('Authorization')
+        
+        # 3. Obtener datos del cuerpo
+        data = request.get_json(silent=True) or {}
+        
+        print(f"[DEBUG] Actualizando perfil para user_id: {current_user_id}")
+        print(f"[DEBUG] Datos recibidos: {data}")
+        
+        # 4. Llamar al servicio
+        result = user_service.update_profile(current_user_id, data, token)
+        
+        print(f"[DEBUG] Resultado del servicio: {result}")
+        
+        return response_handler(result)
+    except Exception as e:
+        print(f"[ERROR] update_user_profile: {str(e)}")
+        return jsonify({"status": "error", "msg": f"Error: {str(e)}", "code": 500}), 500

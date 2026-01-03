@@ -14,8 +14,11 @@ class User(db.Model):
     dni = db.Column(db.String(20), unique=True, nullable=False)
     phone = db.Column(db.String(20), nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    address = db.Column(db.String(200), nullable=True)  # Dirección del usuario
 
     password = db.Column(db.String(255), nullable=False)
 
     role = db.Column(db.String(20), nullable=False)  # docente | pasante
     status = db.Column(db.String(20), nullable=False)  # activo | inactivo
+    java_external = db.Column(db.String(100), nullable=True)  # ID externo del microservicio Java
+    java_token = db.Column(db.String(500), nullable=True)  # Token Bearer de Java para sincronización

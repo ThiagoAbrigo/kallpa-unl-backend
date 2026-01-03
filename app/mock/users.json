@@ -241,5 +241,29 @@
     "status": "ACTIVO",
     "type": "ESTUDIANTE",
     "java_synced": false
+  },
+  {
+    "id": 35,
+    "firstName": "Lucas",
+    "lastName": "Nose",
+    "age": null,
+    "dni": "1150464238",
+    "phone": "0963632129",
+    "email": "lucas123@gmail.com",
+    "address": null,
+    "status": "ACTIVO",
+    "type": "ESTUDIANTE"
+  },
+  {
+    "id": 36,
+    "firstName": "Lucasa",
+    "lastName": "Mandres",
+    "age": null,
+    "dni": "1150383839",
+    "phone": "0963632122",
+    "email": "lucasas122@gmail.com",
+    "address": null,
+    "status": "ACTIVO",
+    "type": "ESTUDIANTE"
   }
 ]
