@@ -11,23 +11,23 @@ def response_handler(result):
 
 
 @attendance_bp.route("/attendance", methods=["POST"])
-def registrar_asistencia():
+def register_attendance():
     """Registrar una asistencia individual"""
     data = request.json
-    result = controller.registrar_asistencia(data)
+    result = controller.register_attendance(data)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/bulk", methods=["POST"])
-def registrar_asistencia_masiva():
+def register_bulk_attendance():
     """Registrar múltiples asistencias de una sesión"""
     data = request.json
-    result = controller.registrar_asistencia_masiva(data)
+    result = controller.register_bulk_attendance(data)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance", methods=["GET"])
-def listar_asistencias():
+def list_attendances():
     """Obtener todas las asistencias con filtros opcionales"""
     filters = {
         "participant_external_id": request.args.get("participant_external_id"),
@@ -37,120 +37,120 @@ def listar_asistencias():
     }
     # Remover filtros vacíos
     filters = {k: v for k, v in filters.items() if v}
-    result = controller.obtener_asistencias(filters if filters else None)
+    result = controller.get_attendances(filters if filters else None)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/<external_id>", methods=["GET"])
-def obtener_asistencia(external_id):
+def get_attendance(external_id):
     """Obtener una asistencia específica por su external_id"""
-    result = controller.obtener_asistencia_por_id(external_id)
+    result = controller.get_attendance_by_id(external_id)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/<external_id>", methods=["PUT"])
-def actualizar_asistencia(external_id):
+def update_attendance(external_id):
     """Actualizar una asistencia existente"""
     data = request.json
-    result = controller.actualizar_asistencia(external_id, data)
+    result = controller.update_attendance(external_id, data)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/<external_id>", methods=["DELETE"])
-def eliminar_asistencia(external_id):
+def delete_attendance(external_id):
     """Eliminar una asistencia"""
-    result = controller.eliminar_asistencia(external_id)
+    result = controller.delete_attendance(external_id)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/summary/<participant_external_id>", methods=["GET"])
-def obtener_resumen(participant_external_id):
+def get_summary(participant_external_id):
     """Obtener resumen de asistencias de un participante"""
-    result = controller.obtener_resumen_por_participante(participant_external_id)
+    result = controller.get_participant_summary(participant_external_id)
     return response_handler(result)
 
 
 # ========== RUTAS PÚBLICAS v2 PARA EL FRONTEND ==========
 
 @attendance_bp.route("/attendance/v2/public/participants", methods=["GET"])
-def obtener_participantes():
+def get_participants():
     """Obtener todos los participantes"""
-    result = controller.obtener_participantes()
+    result = controller.get_participants()
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/schedules", methods=["GET"])
-def obtener_schedules():
+def get_schedules():
     """Obtener todos los horarios"""
-    result = controller.obtener_schedules()
+    result = controller.get_schedules()
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/schedules", methods=["POST"])
-def crear_schedule():
+def create_schedule():
     """Crear un nuevo horario/sesión"""
     data = request.json
-    result = controller.crear_schedule(data)
+    result = controller.create_schedule(data)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/schedules/<schedule_id>", methods=["PUT"])
-def actualizar_schedule(schedule_id):
+def update_schedule(schedule_id):
     """Actualizar un horario/sesión"""
     data = request.json
-    result = controller.actualizar_schedule(schedule_id, data)
+    result = controller.update_schedule(schedule_id, data)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/schedules/<schedule_id>", methods=["DELETE"])
-def eliminar_schedule(schedule_id):
+def delete_schedule(schedule_id):
     """Eliminar un horario/sesión"""
-    result = controller.eliminar_schedule(schedule_id)
+    result = controller.delete_schedule(schedule_id)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/sessions/today", methods=["GET"])
-def obtener_sesiones_hoy():
+def get_today_sessions():
     """Obtener las sesiones programadas para hoy"""
-    result = controller.obtener_sesiones_hoy()
+    result = controller.get_today_sessions()
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/history", methods=["GET"])
-def obtener_historial():
+def get_history():
     """Obtener historial de asistencias con filtros opcionales"""
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
-    result = controller.obtener_historial(date_from, date_to)
+    result = controller.get_history(date_from, date_to)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/register", methods=["POST"])
-def registrar_asistencia_publica():
+def register_public_attendance():
     """Registrar asistencia desde el frontend"""
     data = request.json
-    result = controller.registrar_asistencia_publica(data)
+    result = controller.register_public_attendance(data)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/programs", methods=["GET"])
-def obtener_programas():
+def get_programs():
     """Obtener todos los programas"""
-    result = controller.obtener_programas()
+    result = controller.get_programs()
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/history/session/<schedule_id>/<date>", methods=["GET"])
-def obtener_detalle_sesion(schedule_id, date):
+def get_session_detail(schedule_id, date):
     """Obtener detalle de asistencia de una sesión específica"""
-    result = controller.obtener_detalle_sesion(schedule_id, date)
+    result = controller.get_session_detail(schedule_id, date)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/v2/public/history/session/<schedule_id>/<date>", methods=["DELETE"])
-def eliminar_asistencia_sesion(schedule_id, date):
+def delete_session_attendance(schedule_id, date):
     """Eliminar asistencia de una sesión específica"""
-    result = controller.eliminar_asistencia_sesion(schedule_id, date)
+    result = controller.delete_session_attendance(schedule_id, date)
     return response_handler(result)
 
 
@@ -158,69 +158,70 @@ def eliminar_asistencia_sesion(schedule_id, date):
 # Estas rutas son más simples y coinciden con lo que espera el nuevo frontend
 
 @attendance_bp.route("/attendance/schedules", methods=["GET"])
-def obtener_schedules_simple():
+def get_schedules_simple():
     """Obtener todos los horarios (ruta simplificada)"""
-    result = controller.obtener_schedules()
+    result = controller.get_schedules()
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/schedules", methods=["POST"])
-def crear_schedule_simple():
+def create_schedule_simple():
     """Crear un nuevo horario (ruta simplificada)"""
     data = request.json
-    result = controller.crear_schedule(data)
+    result = controller.create_schedule(data)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/schedules/<schedule_id>", methods=["PUT"])
-def actualizar_schedule_simple(schedule_id):
+def update_schedule_simple(schedule_id):
     """Actualizar un horario (ruta simplificada)"""
     data = request.json
-    result = controller.actualizar_schedule(schedule_id, data)
+    result = controller.update_schedule(schedule_id, data)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/schedules/<schedule_id>", methods=["DELETE"])
-def eliminar_schedule_simple(schedule_id):
+def delete_schedule_simple(schedule_id):
     """Eliminar un horario (ruta simplificada)"""
-    result = controller.eliminar_schedule(schedule_id)
+    result = controller.delete_schedule(schedule_id)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/sessions/today", methods=["GET"])
-def obtener_sesiones_hoy_simple():
+def get_today_sessions_simple():
     """Obtener sesiones de hoy (ruta simplificada)"""
-    result = controller.obtener_sesiones_hoy()
+    result = controller.get_today_sessions()
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/register", methods=["POST"])
-def registrar_asistencia_simple():
+def register_attendance_simple():
     """Registrar asistencia masiva (ruta simplificada)"""
     data = request.json
-    result = controller.registrar_asistencia_publica(data)
+    result = controller.register_public_attendance(data)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/history", methods=["GET"])
-def obtener_historial_simple():
+def get_history_simple():
     """Obtener historial de asistencias (ruta simplificada)"""
     start_date = request.args.get("startDate") or request.args.get("date_from")
     end_date = request.args.get("endDate") or request.args.get("date_to")
     schedule_id = request.args.get("scheduleId")
-    result = controller.obtener_historial(start_date, end_date, schedule_id)
+    day_filter = request.args.get("day")  # Filter by day of week (monday, tuesday, etc.)
+    result = controller.get_history(start_date, end_date, schedule_id, day_filter)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/session/<schedule_id>/<date>", methods=["GET"])
-def obtener_detalle_sesion_simple(schedule_id, date):
+def get_session_detail_simple(schedule_id, date):
     """Obtener detalle de una sesión específica (ruta simplificada)"""
-    result = controller.obtener_detalle_sesion(schedule_id, date)
+    result = controller.get_session_detail(schedule_id, date)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/session/<schedule_id>/<date>", methods=["DELETE"])
-def eliminar_asistencia_sesion_simple(schedule_id, date):
+def delete_session_attendance_simple(schedule_id, date):
     """Eliminar registro de asistencia de una fecha (ruta simplificada)"""
-    result = controller.eliminar_asistencia_sesion(schedule_id, date)
+    result = controller.delete_session_attendance(schedule_id, date)
     return response_handler(result)

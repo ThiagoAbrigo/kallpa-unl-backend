@@ -35,6 +35,24 @@ class UserServiceMock:
             data=users
         )
 
+    def get_participants_only(self):
+        """Obtiene solo los participantes (excluye docentes, administrativos, pasantes)."""
+        users = self._load()
+        # Tipos que NO son participantes (son staff/profesores)
+        staff_types = ["DOCENTE", "ADMINISTRATIVO", "PASANTE", "PROFESOR", "ADMIN"]
+        
+        # Filtrar solo participantes activos
+        participants = [
+            u for u in users 
+            if u.get("type", "").upper() not in staff_types 
+            and u.get("status", "").upper() == "ACTIVO"
+        ]
+        
+        return success_response(
+            msg="Participantes obtenidos correctamente (MOCK)",
+            data=participants
+        )
+
     def create_user(self, data):
         """Crea usuario localmente y lo sincroniza con el microservicio Java."""
         token = self._get_token()

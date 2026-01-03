@@ -1,47 +1,34 @@
 [
     {
-        "external_id": "d2bf2c23-e03b-413c-85a7-e84192295749",
-        "program_id": 1,
-        "name": ",sdclkd",
-        "dayOfWeek": "thursday",
-        "startTime": "08:00",
-        "endTime": "09:00",
-        "maxSlots": 30
-    },
-    {
-        "external_id": "48ef0406-4cbd-4409-a8f7-1d8b8ae38f93",
+        "external_id": "f59aa061-f234-42d8-8e9d-b561b62c322a",
         "program_id": 1,
         "program_name": "Programa 1",
         "day_of_week": "monday",
         "start_time": "08:00",
         "end_time": "09:00",
-        "name": "prueba ",
-        "location": "Gimnasio principal ",
+        "name": "Ejerccio funcional ",
+        "location": "gimnasio de educacion fisica ",
         "capacity": 30,
-        "description": "hola "
+        "description": "Ejercicios ",
+        "start_date": "2026-01-02",
+        "end_date": "2026-02-06",
+        "specific_date": null,
+        "is_recurring": true
     },
     {
-        "external_id": "df30650d-9d53-42ba-9735-7717b58ede56",
-        "program_id": 1,
-        "program_name": "Programa 1",
-        "day_of_week": "monday",
-        "start_time": "08:00",
-        "end_time": "09:00",
-        "name": "Funcional ",
-        "location": "Gimnasio principal ",
-        "capacity": 30,
-        "description": "hola"
-    },
-    {
-        "external_id": "310b35ea-fe33-46bf-870c-2110d3647487",
+        "external_id": "1f2ed4dc-a38e-4292-975c-56605e5eccb0",
         "program_id": 1,
         "program_name": "Programa 1",
         "day_of_week": "friday",
-        "start_time": "08:00",
-        "end_time": "09:00",
-        "name": "Funcional ",
-        "location": "scas",
+        "start_time": "20:00",
+        "end_time": "21:00",
+        "name": "Funcional 2",
+        "location": "gimnasio de educacion fisica ",
         "capacity": 30,
-        "description": "mkjk"
+        "description": "Ejercicios ",
+        "start_date": "2026-01-02",
+        "end_date": "2026-01-30",
+        "specific_date": "2026-01-02",
+        "is_recurring": true
     }
 ]

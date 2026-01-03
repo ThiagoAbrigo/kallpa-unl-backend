@@ -15,6 +15,14 @@ def listar_users():
     result = controller.get_users()
     return response_handler(result)
 
+
+@user_bp.route("/users/participants", methods=["GET"])
+def listar_participantes():
+    """Obtiene solo participantes (excluye docentes, administrativos, pasantes)"""
+    result = controller.get_participants_only()
+    return response_handler(result)
+
+
 @user_bp.route("/users", methods=["POST"])
 def crear_user():
     data = request.json

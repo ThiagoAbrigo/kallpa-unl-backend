@@ -40,12 +40,12 @@
     "firstName": "Cristian",
     "lastName": "Ajila",
     "email": "cristian@example.com",
-    "dni": null,
-    "phone": null,
-    "age": null,
-    "address": null,
+    "dni": "1104999001",
+    "phone": "0991234000",
+    "age": 35,
+    "address": "Centro de Loja",
     "status": "ACTIVO",
-    "type": "DOCENTE"
+    "type": "PROFESOR"
   },
   {
     "id": 5,

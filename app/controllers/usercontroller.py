@@ -6,6 +6,10 @@ class UserController:
     def get_users(self):
         return user_service.get_all_users()
 
+    def get_participants_only(self):
+        """Obtiene solo participantes (sin docentes, administrativos, etc.)"""
+        return user_service.get_participants_only()
+
     def create_user(self, data):
         return user_service.create_user(data)
 
