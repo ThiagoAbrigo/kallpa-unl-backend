@@ -3,7 +3,9 @@ from flask import request
 from app.utils.responses import success_response, error_response
 from app.models.participant import Participant
 from app.models.responsible import Responsible
+from app.models.user import User
 from app.services.java_sync_service import java_sync
+from werkzeug.security import generate_password_hash
 from app import db
 
 
@@ -48,8 +50,7 @@ class UserServiceDB:
                 java_search = java_sync.search_by_identification(dni, token)
                 if java_search.get("found"):
                     return error_response(
-                        msg="Usuario ya existe en el sistema central",
-                        code=400
+                        msg="Usuario ya existe en el sistema central", code=400
                     )
 
             participant = Participant(
@@ -78,13 +79,16 @@ class UserServiceDB:
                     java_external = java_result.get("data", {}).get("external")
                     participant.java_external = java_external
                 else:
-                    print(f"[UserServiceDB] No se pudo sincronizar con Java: {java_result}")
+                    print(
+                        f"[UserServiceDB] No se pudo sincronizar con Java: {java_result}"
+                    )
 
             db.session.add(participant)
             db.session.commit()
 
             return success_response(
-                msg="Participant successfully registered" + (" y sincronizado con Java" if java_synced else ""),
+                msg="Participant successfully registered"
+                + (" y sincronizado con Java" if java_synced else ""),
                 data={
                     "external_id": participant.external_id,
                     "firstName": participant.firstName,
@@ -96,7 +100,8 @@ class UserServiceDB:
         except Exception as e:
             db.session.rollback()
             return error_response(
-                msg=f"Error interno del servidor al registrar el usuario: {str(e)}", code=500
+                msg=f"Error interno del servidor al registrar el usuario: {str(e)}",
+                code=500,
             )
 
     def create_initiation_participant(self, data):
@@ -118,8 +123,7 @@ class UserServiceDB:
                 java_search = java_sync.search_by_identification(dni, token)
                 if java_search.get("found"):
                     return error_response(
-                        msg="Participante ya existe en el sistema central",
-                        code=400
+                        msg="Participante ya existe en el sistema central", code=400
                     )
 
             email = datos_nino.get("email")
@@ -149,15 +153,17 @@ class UserServiceDB:
                     "address": datos_nino.get("address", ""),
                     "type": "INICIACION",
                     "email": f"{datos_nino.get('dni')}@iniciacion.system",
-                    "password": str(uuid.uuid4())[:8]
+                    "password": str(uuid.uuid4())[:8],
                 }
                 java_result = java_sync.create_person_with_account(java_data, token)
                 if java_result and java_result.get("success"):
                     java_synced = True
-                    participant.java_external = java_result.get("data", {}).get("external")
+                    participant.java_external = java_result.get("data", {}).get(
+                        "external"
+                    )
 
             db.session.add(participant)
-            db.session.flush()  
+            db.session.flush()
 
             responsible = Responsible(
                 name=datos_responsable.get("name"),
@@ -171,7 +177,8 @@ class UserServiceDB:
             db.session.commit()
 
             return success_response(
-                msg="Participante de iniciación y responsable registrados correctamente" + (" y sincronizado con Java" if java_synced else ""),
+                msg="Participante de iniciación y responsable registrados correctamente"
+                + (" y sincronizado con Java" if java_synced else ""),
                 data={
                     "participant_external_id": participant.external_id,
                     "responsible_external_id": responsible.external_id,
@@ -181,11 +188,7 @@ class UserServiceDB:
 
         except Exception as e:
             db.session.rollback()
-            return error_response(
-                msg=str(e),
-                code=500
-            )
-
+            return error_response(msg=str(e), code=500)
 
     def change_status(self, external_id, new_state):
         """RF010: Cambiar estado (Activar/Inactivar) y sincroniza con Java."""
@@ -208,14 +211,17 @@ class UserServiceDB:
             participant.status = new_state
             db.session.commit()
 
-
             java_external = participant.java_external
             if token and java_external:
                 java_result = java_sync.change_state(java_external, token)
                 if java_result and java_result.get("success"):
-                    print(f"[UserServiceDB] Estado sincronizado con Java para {java_external}")
+                    print(
+                        f"[UserServiceDB] Estado sincronizado con Java para {java_external}"
+                    )
                 else:
-                    print(f"[UserServiceDB] No se pudo sincronizar estado con Java: {java_result}")
+                    print(
+                        f"[UserServiceDB] No se pudo sincronizar estado con Java: {java_result}"
+                    )
 
             return success_response(
                 msg=f"Status updated to {new_state}",
@@ -273,16 +279,15 @@ class UserServiceDB:
         java_result = java_sync.search_by_identification(dni, token)
         if java_result.get("found"):
             return success_response(
-                msg="Participante encontrado en Java",
-                data=java_result.get("data")
+                msg="Participante encontrado en Java", data=java_result.get("data")
             )
 
         return error_response(msg="Participante no encontrado en Java", code=404)
 
-    #Revisar Josep
+    # Revisar Josep
     def create_participant(self, data):
         token = self._get_token()
- 
+
         try:
             is_minor = data.get("type") == "INICIACION" or data.get("age", 0) < 18
 
@@ -315,12 +320,14 @@ class UserServiceDB:
                 self._sync_with_java(participant, participant_data, token, is_minor)
             except Exception as e:
                 print(f"[Warning] Error sincronizando con Java: {e}")
-                
+
             return success_response(
                 msg="Participante registrado correctamente",
                 data={
                     "participant_external_id": participant.external_id,
-                    "responsible_external_id": responsible.external_id if responsible else None,
+                    "responsible_external_id": (
+                        responsible.external_id if responsible else None
+                    ),
                 },
             )
 
@@ -334,7 +341,7 @@ class UserServiceDB:
 
         if is_minor and not responsible:
             raise Exception("Se requieren datos del responsable")
-    
+
     def _build_participant(self, data, is_minor):
         return Participant(
             firstName=data.get("firstName"),
@@ -369,7 +376,7 @@ class UserServiceDB:
         java_search = java_sync.search_by_identification(dni, token)
         if java_search.get("found"):
             raise Exception("Participante ya existe en el sistema central")
-    
+
     def _sync_with_java(self, participant, participant_data, token, is_minor):
         if not token:
             return
@@ -389,7 +396,9 @@ class UserServiceDB:
             "dni": participant_data.get("dni"),
             "phone": participant_data.get("phone", ""),
             "address": participant_data.get("address", ""),
-            "type": "INICIACION" if is_minor else participant_data.get("type", "EXTERNO"),
+            "type": (
+                "INICIACION" if is_minor else participant_data.get("type", "EXTERNO")
+            ),
             "email": email,
             "password": password,
         }
@@ -399,4 +408,77 @@ class UserServiceDB:
         if java_result and java_result.get("success"):
             participant.java_external = java_result.get("data", {}).get("external")
 
+    def create_user(self, data):
+        try:
+            # ---------- Validación general ----------
+            if not data or not isinstance(data, dict):
+                return {"status": "error", "msg": "Datos inválidos", "code": 400}
 
+            # ---------- Campos obligatorios ----------
+            required_fields = [
+                "firstName",
+                "lastName",
+                "dni",
+                "email",
+                "password",
+                "role",
+            ]
+
+            for field in required_fields:
+                if field not in data or not str(data[field]).strip():
+                    return {
+                        "status": "error",
+                        "msg": f"El campo '{field}' es obligatorio",
+                        "code": 400,
+                    }
+
+            # ---------- Validar rol ----------
+            allowed_roles = ["DOCENTE", "PASANTE"]
+            if data["role"] not in allowed_roles:
+                return {"status": "error", "msg": "Rol inválido", "code": 400}
+
+            # ---------- Validar duplicados ----------
+            if User.query.filter_by(dni=data["dni"]).first():
+                return {
+                    "status": "error",
+                    "msg": "El DNI ya está registrado",
+                    "code": 400,
+                }
+
+            if User.query.filter_by(email=data["email"].lower()).first():
+                return {
+                    "status": "error",
+                    "msg": "El correo ya está registrado",
+                    "code": 400,
+                }
+
+            # ---------- Hashear contraseña ----------
+            hashed_password = generate_password_hash(
+                data["password"], method="pbkdf2:sha256", salt_length=16
+            )
+
+            # ---------- Crear usuario ----------
+            user = User(
+                firstName=data["firstName"].strip(),
+                lastName=data["lastName"].strip(),
+                dni=data["dni"].strip(),
+                phone=data.get("phone"),
+                email=data["email"].lower().strip(),
+                password=hashed_password,
+                role=data["role"],
+                status="ACTIVO",
+            )
+
+            db.session.add(user)
+            db.session.commit()
+
+            return {
+                "status": "success",
+                "msg": "Usuario registrado correctamente",
+                "code": 201,
+                "data": {"external_id": user.external_id, "role": user.role},
+            }
+
+        except Exception as e:
+            db.session.rollback()
+            return {"status": "error", "msg": f"Error interno: {str(e)}", "code": 500}

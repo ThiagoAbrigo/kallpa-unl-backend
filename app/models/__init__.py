@@ -11,6 +11,7 @@ from .evaluation import Evaluation
 from .evaluationResult import EvaluationResult
 from .test import Test
 from .testExercise import TestExercise
+from .user import User
 
 __all__ = [
     "Attendance",
@@ -25,5 +26,6 @@ __all__ = [
     "Evaluation",
     "EvaluationResult",
     "Test",
-    "TestExercise"
+    "TestExercise",
+    "User"
 ]
