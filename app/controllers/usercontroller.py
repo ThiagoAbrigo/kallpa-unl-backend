@@ -10,6 +10,10 @@ class UserController:
         """Obtiene solo participantes (sin docentes, administrativos, etc.)"""
         return user_service.get_participants_only()
 
+    def get_pasantes(self):
+        """Obtiene solo pasantes"""
+        return user_service.get_pasantes()
+
     def create_user(self, data):
         return user_service.create_user(data)
 

@@ -53,6 +53,21 @@ class UserServiceMock:
             data=participants
         )
 
+    def get_pasantes(self):
+        """Obtiene solo los pasantes."""
+        users = self._load()
+        
+        # Filtrar solo pasantes
+        pasantes = [
+            u for u in users 
+            if u.get("type", "").upper() == "PASANTE"
+        ]
+        
+        return success_response(
+            msg="Pasantes obtenidos correctamente (MOCK)",
+            data=pasantes
+        )
+
     def create_user(self, data):
         """Crea usuario localmente y lo sincroniza con el microservicio Java."""
         token = self._get_token()

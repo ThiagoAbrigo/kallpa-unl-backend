@@ -1,4 +1,5 @@
 import os
+from os import path
 
 # USERS
 from app.services.users.user_service_mock import UserServiceMock
@@ -18,6 +19,7 @@ from app.services.evaluation.evaluation_service_bd import EvaluationServiceDB
 
 # Get USE_MOCK from environment variable
 USE_MOCK = os.getenv('USE_MOCK', 'false').lower() == 'true'
+print(f"[Services] USE_MOCK = {USE_MOCK}")
 
 if USE_MOCK:
     user_service = UserServiceMock()

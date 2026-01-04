@@ -47,40 +47,20 @@ class EvaluationServiceDB:
                 return error_response("Datos inválidos")
 
             if "name" not in data or not data["name"].strip():
-                return error_response("Por favor ingrese el nombre del test")
+                return error_response({"name": "Campo requerido"})
 
             if Test.query.filter_by(name=data["name"].strip()).first():
-                return error_response("El test con ese nombre ya existe")
+                return error_response({"name": "El test con ese nombre ya existe"})
 
             if "frequency_months" not in data:
-                return error_response("Se requiere la frecuencia en meses")
-
-            if (
-                not isinstance(data["frequency_months"], int)
-                or data["frequency_months"] <= 0
-            ):
                 return error_response(
-                    "La frecuencia debe ser un número entero positivo"
+                    {"frequency_months": "Se requiere la frecuencia en meses"}
                 )
 
-            if (
-                "exercises" not in data
-                or not isinstance(data["exercises"], list)
-                or len(data["exercises"]) == 0
-            ):
-                return error_response("Debe ingresar al menos un ejercicio")
-
-            exercise_names = set()
-
-            for ex in data["exercises"]:
-                if not ex.get("name") or not ex.get("unit"):
-                    return error_response("Cada ejercicio debe tener nombre y unidad")
-
-                key = ex["name"].strip().lower()
-                if key in exercise_names:
-                    return error_response("Ejercicio repetido")
-
-                exercise_names.add(key)
+            if not data.get("exercises") or len(data["exercises"]) == 0:
+                return error_response(
+                    {"exercises": "Se requiere al menos un ejercicio"}
+                )
 
             test = Test(
                 name=data["name"].strip(),
@@ -258,7 +238,7 @@ class EvaluationServiceDB:
                 .all()
             )
 
-            evaluations.reverse() 
+            evaluations.reverse()
 
             if not evaluations:
                 return success_response(
