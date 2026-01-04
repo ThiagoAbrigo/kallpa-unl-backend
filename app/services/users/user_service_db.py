@@ -534,13 +534,186 @@ class UserServiceDB:
             db.session.add(user)
             db.session.commit()
 
+            # ---------- Sincronizar con Java ----------
+            token = self._get_token()
+            if token:
+                java_data = {
+                    "firstName": user.firstName,
+                    "lastName": user.lastName,
+                    "dni": user.dni,
+                    "phone": user.phone or "0000000000",
+                    "address": user.address or "Sin dirección",
+                    "type": user.role,
+                    "email": user.email,
+                    "password": data["password"],  # Usar password sin hashear para Java
+                }
+                
+                java_result = java_sync.create_person_with_account(java_data, token)
+                
+                if java_result and java_result.get("success"):
+                    user.java_external = java_result.get("data", {}).get("external")
+                    db.session.commit()
+                    print(f"[UserService] ✅ Usuario sincronizado con Java: {user.java_external}")
+                else:
+                    print(f"[UserService] ⚠️ No se pudo sincronizar con Java: {java_result}")
+
             return {
                 "status": "success",
                 "msg": "Usuario registrado correctamente",
                 "code": 200,
-                "data": {"external_id": user.external_id, "role": user.role},
+                "data": {
+                    "external_id": user.external_id,
+                    "role": user.role,
+                    "java_synced": bool(user.java_external)
+                },
             }
 
         except Exception as e:
             db.session.rollback()
             return {"status": "error", "msg": f"Error interno: {str(e)}", "code": 500}
+
+    def get_profile(self, external_id):
+        """
+        Obtiene el perfil completo de un usuario por su external_id.
+        """
+        try:
+            db.session.expire_all()
+            user = User.query.filter_by(external_id=external_id).first()
+            if not user:
+                return error_response("Usuario no encontrado", 404)
+            
+            return success_response(
+                msg="Perfil obtenido correctamente",
+                data={
+                    "external_id": user.external_id,
+                    "email": user.email,
+                    "firstName": user.firstName,
+                    "lastName": user.lastName,
+                    "dni": user.dni,
+                    "phone": user.phone,
+                    "address": user.address,
+                    "role": user.role,
+                    "status": user.status
+                }
+            )
+        except Exception as e:
+            print(f"[UserService] Error obteniendo perfil: {str(e)}")
+            return error_response(f"Error obteniendo perfil: {str(e)}")
+
+    def update_profile(self, external_id, data, token_auth):
+        """
+        Actualiza el perfil de un usuario y sincroniza con Java.
+        external_id: ID del usuario logueado (de la BD local)
+        data: JSON con { firstName, lastName, phone, address, ... }
+        token_auth: No se usa - se obtiene token fresco de Java
+        """
+        import requests
+        
+        try:
+            print(f"[UserService] Buscando usuario con external_id: {external_id}")
+            
+            user = User.query.filter_by(external_id=external_id).first()
+            if not user:
+                print(f"[UserService] Usuario no encontrado")
+                return error_response("Usuario no encontrado", 404)
+
+            print(f"[UserService] Usuario encontrado: {user.firstName} {user.lastName}")
+
+            if 'firstName' in data:
+                user.firstName = data['firstName']
+            if 'lastName' in data:
+                user.lastName = data['lastName']
+            if 'phone' in data:
+                user.phone = data['phone']
+            if 'address' in data:
+                user.address = data['address']
+            
+            db.session.commit()
+            print(f"[UserService] Datos actualizados en BD local")
+
+            java_synced = False
+            java_error_msg = None
+            
+            try:
+                print(f"[UserService] Haciendo login a Java para obtener external y token frescos...")
+                
+                java_login_resp = requests.post(
+                    'http://localhost:8096/api/person/login',
+                    json={'email': user.email, 'password': data.get('password', '12345678')},
+                    timeout=5
+                )
+                
+                print(f"[UserService] Java login response: {java_login_resp.status_code}")
+                
+                if java_login_resp.status_code == 200:
+                    java_data = java_login_resp.json().get('data', {})
+                    java_external = java_data.get('external')
+                    java_token = java_data.get('token')
+                    
+                    print(f"[UserService] Java external FRESCO: {java_external}")
+                    print(f"[UserService] Java token FRESCO: {java_token[:30] if java_token else 'None'}...")
+                    
+                    if java_external and java_token:
+                        rol_java = "EXTERNOS"
+                        if user.role == "ESTUDIANTE":
+                            rol_java = "ESTUDIANTES"
+                        elif user.role == "DOCENTE":
+                            rol_java = "DOCENTES"
+                        elif user.role == "ADMINISTRATIVO":
+                            rol_java = "ADMINISTRATIVOS"
+
+                        payload_java = {
+                            "first_name": user.firstName,
+                            "last_name": user.lastName,
+                            "external": java_external,
+                            "type_identification": "CEDULA",
+                            "type_stament": rol_java,
+                            "direction": user.address if user.address else "Sin dirección",
+                            "phono": user.phone if user.phone else "0000000000"
+                        }
+
+                        print(f"[UserService] Payload para Java: {payload_java}")
+                        
+                        java_resp = java_sync.update_person_in_java(payload_java, java_token)
+                        
+                        if java_resp and java_resp.get('status') == 'success':
+                            java_synced = True
+                            print(f"[UserService] Sincronizado con Java exitosamente")
+                        else:
+                            java_error_msg = java_resp.get('message') if java_resp else 'Sin respuesta'
+                            print(f"[UserService] Java update falló: {java_error_msg}")
+                    else:
+                        java_error_msg = "No se obtuvo external/token de Java"
+                else:
+                    java_error_msg = f"Login Java falló: {java_login_resp.status_code}"
+                    print(f"[UserService] {java_error_msg}")
+                    
+            except requests.exceptions.RequestException as e:
+                java_error_msg = f"Error conexión Java: {str(e)}"
+                print(f"[UserService] {java_error_msg}")
+
+            response_data = {
+                "external_id": user.external_id,
+                "email": user.email,
+                "firstName": user.firstName,
+                "lastName": user.lastName,
+                "dni": user.dni,
+                "phone": user.phone,
+                "address": user.address,
+                "role": user.role,
+                "status": user.status,
+                "java_synced": java_synced
+            }
+            
+            if java_synced:
+                return success_response(msg="Perfil actualizado correctamente", data=response_data)
+            else:
+                return success_response(
+                    msg=f"Perfil actualizado localmente. Java: {java_error_msg}",
+                    data=response_data
+                )
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"[UserService] Error: {str(e)}")
+            return error_response(f"Error actualizando perfil: {str(e)}")

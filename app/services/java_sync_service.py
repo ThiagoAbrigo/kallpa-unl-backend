@@ -44,6 +44,30 @@ class JavaSyncService:
         }
         return mapping.get(java_type, "EXTERNO")
 
+    def update_person_in_java(self, data, token):
+        """
+        Envía los datos actualizados a Java.
+        Endpoint: POST /api/person/update
+        Data esperada: first_name, last_name, external, type_identification, type_stament, direction, phono
+        """
+        try:
+            url = f"{self.base_url}/update"
+            response = requests.post(
+                url,
+                json=data,
+                headers=self._get_headers(token),
+                timeout=self.timeout
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                print(f"⚠️ Java respondió error {response.status_code}: {response.text}")
+                return None
+        except Exception as e:
+            print(f"❌ Error conectando con Java: {e}")
+            return None
+
     def search_by_identification(self, identification, token):
         """Busca persona por cédula/identificación en el microservicio Java."""
         try:
