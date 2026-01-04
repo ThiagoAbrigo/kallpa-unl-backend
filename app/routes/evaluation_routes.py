@@ -19,7 +19,7 @@ def list_test():
 
 
 @evaluation_bp.route("/save-test", methods=["POST"])
-@roles_required("DOCENTE")
+# @roles_required("DOCENTE")
 def register_evaluation():
     data = request.json
     return response_handler(controller.register(data))

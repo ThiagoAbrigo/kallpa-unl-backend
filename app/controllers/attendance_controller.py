@@ -1,3 +1,4 @@
+from datetime import date
 from app.services import attendance_service
 
 
@@ -57,9 +58,13 @@ class AttendanceController:
         """Obtener las sesiones programadas para hoy"""
         return attendance_service.get_today_sessions()
 
-    def get_history(self, date_from=None, date_to=None, schedule_id=None, day_filter=None):
+    def get_history(
+        self, date_from=None, date_to=None, schedule_id=None, day_filter=None
+    ):
         """Obtener historial de asistencias"""
-        return attendance_service.get_history(date_from, date_to, schedule_id, day_filter)
+        return attendance_service.get_history(
+            date_from, date_to, schedule_id, day_filter
+        )
 
     def register_public_attendance(self, data):
         """Registrar asistencia desde el frontend"""
@@ -76,3 +81,17 @@ class AttendanceController:
     def delete_session_attendance(self, schedule_id, date):
         """Eliminar asistencia de una sesión"""
         return attendance_service.delete_session_attendance(schedule_id, date)
+
+    def get_today_attendance_average(self):
+        today = date.today().isoformat()
+        response = attendance_service.get_attendances({"date": today})
+        attendances = response["data"] if response["status"] == "ok" else []
+
+        average = attendance_service.calculate_attendance_average(attendances)
+
+        return {
+            "status": "ok",
+            "msg": "Promedio de asistencia del día",
+            "data": {"average": average, "date": today},
+            "code": 200,
+        }
