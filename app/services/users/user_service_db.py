@@ -509,6 +509,34 @@ class UserServiceDB:
             db.session.rollback()
             return {"status": "error", "msg": f"Error interno: {str(e)}", "code": 500}
 
+    def get_profile(self, external_id):
+        """
+        Obtiene el perfil completo de un usuario por su external_id.
+        """
+        try:
+            db.session.expire_all()
+            user = User.query.filter_by(external_id=external_id).first()
+            if not user:
+                return error_response("Usuario no encontrado", 404)
+            
+            return success_response(
+                msg="Perfil obtenido correctamente",
+                data={
+                    "external_id": user.external_id,
+                    "email": user.email,
+                    "firstName": user.firstName,
+                    "lastName": user.lastName,
+                    "dni": user.dni,
+                    "phone": user.phone,
+                    "address": user.address,
+                    "role": user.role,
+                    "status": user.status
+                }
+            )
+        except Exception as e:
+            print(f"[UserService] Error obteniendo perfil: {str(e)}")
+            return error_response(f"Error obteniendo perfil: {str(e)}")
+
     def update_profile(self, external_id, data, token_auth):
         """
         Actualiza el perfil de un usuario y sincroniza con Java.
@@ -603,10 +631,14 @@ class UserServiceDB:
 
             response_data = {
                 "external_id": user.external_id,
+                "email": user.email,
                 "firstName": user.firstName,
                 "lastName": user.lastName,
+                "dni": user.dni,
                 "phone": user.phone,
                 "address": user.address,
+                "role": user.role,
+                "status": user.status,
                 "java_synced": java_synced
             }
             

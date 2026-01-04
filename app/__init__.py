@@ -25,4 +25,9 @@ def create_app():
         app.register_blueprint(assessment_bp, url_prefix='/api')
         from app.routes.evaluation_routes import evaluation_bp
         app.register_blueprint(evaluation_bp, url_prefix='/api')
+    
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        db.session.remove()
+    
     return app

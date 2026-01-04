@@ -85,6 +85,24 @@ def create_user():
     return response_handler(controller.create_user(data))
 
 
+@user_bp.route('/users/profile', methods=['GET'])
+@jwt_required
+def get_user_profile():
+    """Obtiene el perfil del usuario autenticado."""
+    try:
+        current_user_id = get_jwt_identity()
+        
+        if not current_user_id:
+            return jsonify({"status": "error", "msg": "No se pudo identificar al usuario", "code": 401}), 401
+        
+        result = user_service.get_profile(current_user_id)
+        return response_handler(result)
+        
+    except Exception as e:
+        print(f"[ERROR] get_user_profile: {str(e)}")
+        return jsonify({"status": "error", "msg": f"Error: {str(e)}", "code": 500}), 500
+
+
 @user_bp.route('/users/profile', methods=['PUT'])
 @jwt_required
 def update_user_profile():
