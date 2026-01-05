@@ -103,5 +103,201 @@
         "schedule_external_id": "1f2ed4dc-a38e-4292-975c-56605e5eccb0",
         "date": "2026-01-02",
         "status": "present"
+    },
+    {
+        "external_id": "37ba560c-d8c4-4036-9fdf-efde32421e90",
+        "participant_external_id": "part-001-uuid",
+        "schedule_external_id": "049369e8-4f67-48c1-be02-442152f19073",
+        "date": "2026-01-05",
+        "status": "absent"
+    },
+    {
+        "external_id": "e3e403f8-4adc-4939-ac28-f761e6c0fd85",
+        "participant_external_id": "part-002-uuid",
+        "schedule_external_id": "049369e8-4f67-48c1-be02-442152f19073",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "a707191f-cd2a-41cc-8438-50689dc2b8ba",
+        "participant_external_id": "part-003-uuid",
+        "schedule_external_id": "049369e8-4f67-48c1-be02-442152f19073",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "e09bcd64-d59e-4b37-ba5e-536e769276bb",
+        "participant_external_id": "part-004-uuid",
+        "schedule_external_id": "049369e8-4f67-48c1-be02-442152f19073",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "d55111b4-411f-410b-86d2-58d081f770f3",
+        "participant_external_id": "part-005-uuid",
+        "schedule_external_id": "049369e8-4f67-48c1-be02-442152f19073",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "eeab3f3e-b8b1-4b8e-b525-cce6d678a34d",
+        "participant_external_id": "part-001-uuid",
+        "schedule_external_id": "d743d4f9-5a16-4382-9a81-59661fa1a050",
+        "date": "2026-01-05",
+        "status": "absent"
+    },
+    {
+        "external_id": "5a042d5c-8059-438f-9681-426ab5f9e580",
+        "participant_external_id": "part-002-uuid",
+        "schedule_external_id": "d743d4f9-5a16-4382-9a81-59661fa1a050",
+        "date": "2026-01-05",
+        "status": "absent"
+    },
+    {
+        "external_id": "ac312386-12ec-4fab-b5da-41d35664d0b4",
+        "participant_external_id": "part-003-uuid",
+        "schedule_external_id": "d743d4f9-5a16-4382-9a81-59661fa1a050",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "f9621e61-0d71-4634-b5a4-6f9bcd04aa86",
+        "participant_external_id": "part-004-uuid",
+        "schedule_external_id": "d743d4f9-5a16-4382-9a81-59661fa1a050",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "dd2e610d-66d0-475a-a60d-dc1ce3f16280",
+        "participant_external_id": "part-005-uuid",
+        "schedule_external_id": "d743d4f9-5a16-4382-9a81-59661fa1a050",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "109c1674-6fd4-4de4-9744-5a1ad9e331aa",
+        "participant_external_id": "part-001-uuid",
+        "schedule_external_id": "f59aa061-f234-42d8-8e9d-b561b62c322a",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "acb262e5-9cfc-4739-9f97-d48ee8847ef8",
+        "participant_external_id": "part-002-uuid",
+        "schedule_external_id": "f59aa061-f234-42d8-8e9d-b561b62c322a",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "f1bcdaeb-3e74-4ec6-bf77-a2c26c9885e2",
+        "participant_external_id": "part-003-uuid",
+        "schedule_external_id": "f59aa061-f234-42d8-8e9d-b561b62c322a",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "2090fb1f-a055-4132-af00-eb53fbf81718",
+        "participant_external_id": "part-004-uuid",
+        "schedule_external_id": "f59aa061-f234-42d8-8e9d-b561b62c322a",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "fa225e52-7ad8-40bf-b64d-fdf26bba9b64",
+        "participant_external_id": "part-005-uuid",
+        "schedule_external_id": "f59aa061-f234-42d8-8e9d-b561b62c322a",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "8b3bfe36-13e6-497d-987e-bee4d6573b91",
+        "participant_external_id": "part-001-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "2f781493-393c-4284-8a03-dd22e8f97c04",
+        "participant_external_id": "part-002-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "2bf41966-0678-4c93-a6a3-2d844dee88dd",
+        "participant_external_id": "part-003-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "3840f871-aa87-4d0c-8158-7c08533fc759",
+        "participant_external_id": "part-004-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "da466877-c949-492f-bb95-2509217edf88",
+        "participant_external_id": "part-005-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "df8b44fb-ca14-438c-9320-a78874c92b3c",
+        "participant_external_id": "part-006-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "368ffa76-fb51-4425-ba18-7a276b832f05",
+        "participant_external_id": "part-007-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "d5cb2612-0027-442f-b33e-1118d87ba926",
+        "participant_external_id": "part-008-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "0a327c8f-f310-4745-8f8c-1d83e8857792",
+        "participant_external_id": "part-ini-001-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "787015e9-4e2a-46bc-b319-b156f66537cc",
+        "participant_external_id": "part-ini-002-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "43351203-092a-4fa7-8ac9-60ecd4a971d6",
+        "participant_external_id": "part-ini-003-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "22f8a938-349a-4082-8ce3-b9169c120278",
+        "participant_external_id": "part-ini-004-uuid",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
+    },
+    {
+        "external_id": "0cc3c2f1-98d3-42f4-962c-a0d8d920abb4",
+        "participant_external_id": "f2688cf2-ccaa-4188-a527-af92018c0415",
+        "schedule_external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
+        "date": "2026-01-05",
+        "status": "present"
     }
 ]
