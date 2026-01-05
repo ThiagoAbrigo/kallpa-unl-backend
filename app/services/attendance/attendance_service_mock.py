@@ -40,7 +40,6 @@ class AttendanceServiceMock:
             if field not in data:
                 return error_response(f"Falta el campo requerido: {field}")
 
-        # Validar status
         valid_statuses = ["present", "absent"]
         if data["status"] not in valid_statuses:
             return error_response(f"Estado inválido. Use: {valid_statuses}")
@@ -154,7 +153,6 @@ class AttendanceServiceMock:
             if index is None:
                 return error_response("Asistencia no encontrada", code=404)
 
-            # Actualizar campos permitidos
             if "status" in data:
                 if data["status"] not in ["present", "absent"]:
                     return error_response("Estado inválido. Use: present, absent")
@@ -212,7 +210,7 @@ class AttendanceServiceMock:
         except Exception as e:
             return error_response(f"Error interno: {e}")
 
-    # ==================== MÉTODOS PÚBLICOS PARA EL FRONTEND ====================
+
 
     def get_participants(self, program=None):
         """Obtener todos los participantes (MOCK)"""
@@ -220,7 +218,7 @@ class AttendanceServiceMock:
             participants = self._load(self.participants_path)
             
             if program:
-                 participants = [p for p in participants if str(p.get("program_id", "")) == str(program) or p.get("program_name") == program]
+                participants = [p for p in participants if str(p.get("program_id", "")) == str(program) or p.get("program_name") == program]
 
             return success_response(
                 msg="Participantes obtenidos correctamente (MOCK)",
@@ -248,7 +246,6 @@ class AttendanceServiceMock:
             participants = self._load(self.participants_path)
             today = date.today().isoformat()
             
-            # Mapear día de la semana
             weekdays_en = {
                 0: "monday", 1: "tuesday", 2: "wednesday", 
                 3: "thursday", 4: "friday", 5: "saturday", 6: "sunday"
@@ -260,20 +257,16 @@ class AttendanceServiceMock:
             today_weekday_en = weekdays_en.get(date.today().weekday(), "")
             today_weekday_es = weekdays_es.get(date.today().weekday(), "")
             
-            # Filtrar schedules del día de hoy
             today_sessions = []
             for s in schedules:
                 is_today = False
                 
-                # Verificar si es una fecha específica
                 specific_date = s.get("specific_date") or s.get("fecha_especifica")
                 if specific_date:
                     is_today = (specific_date == today)
                 else:
-                    # Verificar día de la semana recurrente
                     day = (s.get("dayOfWeek") or s.get("day_of_week") or "").lower()
                     if day == today_weekday_en:
-                        # Si tiene rango de fechas, verificar que estamos dentro del rango
                         start_date = s.get("start_date")
                         end_date = s.get("end_date")
                         if start_date and end_date:
@@ -283,10 +276,9 @@ class AttendanceServiceMock:
                         elif end_date:
                             is_today = (today <= end_date)
                         else:
-                            is_today = True  # Recurrente sin restricciones de fecha
+                            is_today = True
                 
                 if is_today:
-                    # Contar asistencias de esta sesión para hoy
                     schedule_id = s.get("external_id")
                     session_attendances = [r for r in records 
                                          if r.get("schedule_external_id") == schedule_id and r.get("date") == today]
@@ -326,23 +318,18 @@ class AttendanceServiceMock:
             participants = self._load(self.participants_path)
             schedules = self._load(self.schedules_path)
             
-            # Crear diccionarios para lookup rápido
             participants_dict = {p.get("external_id"): p for p in participants}
             schedules_dict = {s.get("external_id"): s for s in schedules}
             
-            # Filtrar por rango de fechas si se proporciona
             if date_from:
                 records = [r for r in records if r.get("date", "") >= date_from]
             if date_to:
                 records = [r for r in records if r.get("date", "") <= date_to]
             
-            # Filtrar por schedule_id si se proporciona
             if schedule_id:
                 records = [r for r in records if r.get("schedule_external_id") == schedule_id]
             
-            # Filtrar por día de la semana si se proporciona
             if day_filter and day_filter.lower() != "todos los días":
-                # Mapear días en español a inglés
                 day_map_es_to_en = {
                     'lunes': 'monday', 'martes': 'tuesday', 'miércoles': 'wednesday',
                     'miercoles': 'wednesday', 'jueves': 'thursday', 'viernes': 'friday',
@@ -350,7 +337,6 @@ class AttendanceServiceMock:
                 }
                 day_en = day_map_es_to_en.get(day_filter.lower(), day_filter.lower())
                 
-                # Filtrar records por día de la semana del schedule
                 filtered_records = []
                 for r in records:
                     schedule = schedules_dict.get(r.get("schedule_external_id"), {})
@@ -359,7 +345,6 @@ class AttendanceServiceMock:
                         filtered_records.append(r)
                 records = filtered_records
             
-            # Agrupar por schedule_id y fecha para el formato esperado por el frontend
             grouped = {}
             for r in records:
                 key = f"{r.get('schedule_external_id')}_{r.get('date')}"
@@ -384,7 +369,6 @@ class AttendanceServiceMock:
                     grouped[key]["ausentes"] += 1
             
             history = list(grouped.values())
-            # Ordenar por fecha descendente
             history.sort(key=lambda x: x.get("date", ""), reverse=True)
             
             return success_response(
@@ -408,7 +392,6 @@ class AttendanceServiceMock:
         today = date.today()
         current_day = today.weekday()
         
-        # Calcular diferencia de días (buscamos el día más reciente, incluyendo hoy)
         diff = target_day - current_day
         if diff > 0:
             diff -= 7
@@ -422,32 +405,36 @@ class AttendanceServiceMock:
             if not data:
                 return error_response("No se enviaron datos")
             
-            schedule_id = data.get("schedule_id")
+            schedule_id = data.get("schedule_id") or data.get("schedule_external_id")
             
-            # Obtener el schedule para conocer el día de la semana
             schedules = self._load(self.schedules_path)
             schedule = next((s for s in schedules if str(s.get("external_id")) == str(schedule_id)), None)
             
-            # Calcular la fecha basándose en el día de la semana del schedule
             day_of_week = schedule.get("dayOfWeek") or schedule.get("day_of_week") if schedule else None
             if day_of_week:
                 attendance_date = self._calculate_date_for_weekday(day_of_week)
             else:
                 attendance_date = data.get("date", date.today().isoformat())
             
-            # Soportar ambos formatos: 
-            # - attendance: {participant_id: status} (diccionario)
-            # - records: [{participant_id, status}] (array)
             attendances = data.get("attendance", {})
             input_records = data.get("records", [])
+            input_attendances = data.get("attendances", [])
             
-            # Convertir records a formato attendances si viene como array
+            if input_attendances and isinstance(input_attendances, list):
+                attendances = {}
+                for r in input_attendances:
+                    pid = str(r.get("participant_external_id", "") or r.get("participant_id", ""))
+                    status = r.get("status", "PRESENT")
+                    if pid:
+                        attendances[pid] = status
+            
             if input_records and isinstance(input_records, list):
                 attendances = {}
                 for r in input_records:
-                    pid = str(r.get("participant_id", ""))
+                    pid = str(r.get("participant_id", "") or r.get("participant_external_id", ""))
                     status = r.get("status", "PRESENT")
-                    attendances[pid] = status
+                    if pid:
+                        attendances[pid] = status
             
             # Convertir schedule_id a string si viene como int
             schedule_id = str(schedule_id) if schedule_id else None
@@ -455,14 +442,13 @@ class AttendanceServiceMock:
             if not schedule_id:
                 return error_response("Falta el campo: schedule_id")
             if not attendances:
-                return error_response("Falta el campo: attendance o records")
+                return error_response("Falta el campo: attendance, records o attendances")
             
             records = self._load()
             new_records = []
             
             for participant_id, status in attendances.items():
                 participant_id = str(participant_id)
-                # Buscar si ya existe un registro para este participante/sesión/fecha
                 exists = False
                 for r in records:
                     r_pid = str(r.get("participant_external_id", ""))
@@ -470,7 +456,6 @@ class AttendanceServiceMock:
                     if (r_pid == participant_id and 
                         r_sid == schedule_id and 
                         r.get("date") == attendance_date):
-                        # Actualizar existente
                         r["status"] = status.lower() if isinstance(status, str) else status
                         exists = True
                         break
@@ -498,7 +483,6 @@ class AttendanceServiceMock:
     def get_programs(self):
         """Obtener todos los programas (MOCK)"""
         try:
-            # Extraer programas únicos de los schedules
             schedules = self._load(self.schedules_path)
             programs = {}
             for s in schedules:
@@ -524,16 +508,12 @@ class AttendanceServiceMock:
             participants = self._load(self.participants_path)
             schedules = self._load(self.schedules_path)
             
-            # Buscar el schedule
             schedule = next((s for s in schedules if s.get("external_id") == schedule_id), None)
             
-            # Filtrar asistencias de esta sesión y fecha
             session_attendances = [r for r in records 
                          if r.get("schedule_external_id") == schedule_id and r.get("date") == attendance_date]
             
-            # Crear diccionarios de participantes (por external_id y por índice numérico)
             participants_dict = {p.get("external_id"): p for p in participants}
-            # También indexar por número (1, 2, 3...) para compatibilidad con datos antiguos
             for i, p in enumerate(participants, start=1):
                 participants_dict[str(i)] = p
             
@@ -542,7 +522,6 @@ class AttendanceServiceMock:
                 participant_id = a.get("participant_external_id")
                 participant = participants_dict.get(participant_id, {})
                 
-                # Obtener nombre del participante (soportar firstName/lastName o first_name/last_name)
                 first_name = participant.get('firstName') or participant.get('first_name', '')
                 last_name = participant.get('lastName') or participant.get('last_name', '')
                 full_name = f"{first_name} {last_name}".strip()
@@ -555,7 +534,6 @@ class AttendanceServiceMock:
                     "status": a.get("status", "").upper()
                 })
             
-            # Calcular estadísticas
             present_count = len([r for r in detail_records if r.get("status") == "PRESENT"])
             absent_count = len([r for r in detail_records if r.get("status") in ["ABSENT", "JUSTIFIED"]])
             total = len(detail_records)
@@ -585,7 +563,6 @@ class AttendanceServiceMock:
         try:
             records = self._load()
             
-            # Filtrar los registros que NO son de esta sesión/fecha (quedarse con los demás)
             filtered_records = [r for r in records 
                                   if not (r.get("schedule_external_id") == schedule_id and r.get("date") == attendance_date)]
             
@@ -618,11 +595,10 @@ class AttendanceServiceMock:
             description = data.get("description") or data.get("descripcion", "")
             program_id = data.get("program_id", 1)
             
-            # Nuevos campos para fechas específicas
-            start_date = data.get("start_date") or data.get("fecha_inicio")  # Fecha inicio del periodo
-            end_date = data.get("end_date") or data.get("fecha_fin")  # Fecha fin del periodo
-            specific_date = data.get("specific_date") or data.get("fecha_especifica")  # Fecha única específica
-            is_recurring = data.get("is_recurring", True)  # Si es recurrente o fecha única
+            start_date = data.get("start_date") or data.get("fecha_inicio")
+            end_date = data.get("end_date") or data.get("fecha_fin")
+            specific_date = data.get("specific_date") or data.get("fecha_especifica")
+            is_recurring = data.get("is_recurring", True)
             
             if not name:
                 return error_response("Falta el campo: name/nombre")
@@ -633,7 +609,6 @@ class AttendanceServiceMock:
             if not end_time:
                 return error_response("Falta el campo: end_time/hora_fin")
             
-            # Si hay fecha específica, derivar el día de la semana de ella
             if specific_date:
                 from datetime import datetime
                 try:
@@ -647,7 +622,6 @@ class AttendanceServiceMock:
                 except ValueError:
                     return error_response("Formato de fecha inválido. Use: YYYY-MM-DD")
             
-            # Mapear día a inglés si viene en español
             day_map = {
                 'lunes': 'monday', 'martes': 'tuesday', 'miercoles': 'wednesday',
                 'miércoles': 'wednesday', 'jueves': 'thursday', 'viernes': 'friday',
