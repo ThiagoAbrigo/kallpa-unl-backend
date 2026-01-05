@@ -13,7 +13,7 @@ class AuthService:
         password = data.get("password")
 
         if not email or not password:
-            return error_response("Email y contraseña requeridos", 400)
+            return error_response("Porfavor ingrese las credenciales", 400)
 
         user = User.query.filter_by(email=email, status="ACTIVO").first()
 
