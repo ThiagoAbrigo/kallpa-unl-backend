@@ -218,7 +218,7 @@ class AttendanceServiceMock:
             participants = self._load(self.participants_path)
             
             if program:
-                participants = [p for p in participants if str(p.get("program_id", "")) == str(program) or p.get("program_name") == program]
+                participants = [p for p in participants if str(p.get("program_id", "")) == str(program) or p.get("program_name") == program or p.get("program") == program]
 
             return success_response(
                 msg="Participantes obtenidos correctamente (MOCK)",
@@ -635,7 +635,7 @@ class AttendanceServiceMock:
             new_schedule = {
                 "external_id": str(uuid.uuid4()),
                 "program_id": program_id,
-                "program_name": f"Programa {program_id}",
+                "program_name": "Iniciación" if program_id == 2 else "Funcional",
                 "day_of_week": day_en,
                 "start_time": start_time,
                 "end_time": end_time,

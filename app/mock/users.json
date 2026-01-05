@@ -108,6 +108,7 @@
     "email": "carlos.vargas@ejemplo.com",
     "address": "Av. Universitaria",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE"
   },
   {
@@ -156,6 +157,7 @@
     "email": "carlos.vargas@ejempo.com",
     "address": "Av. Universitaia",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE"
   },
   {
@@ -168,6 +170,7 @@
     "email": "juan.perez@unl.edu.ec",
     "address": "San Sebastián",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE"
   },
   {
@@ -216,6 +219,7 @@
     "email": "maria.gonzalez@ejemplo.com",
     "address": "Av. Loja y Bolívar",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE"
   },
   {
@@ -240,6 +244,7 @@
     "email": "1150676829@participante.local",
     "address": "Lojita",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE",
     "java_synced": false
   },
@@ -253,6 +258,7 @@
     "email": "1150464729@participante.local",
     "address": "Loxita",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE",
     "java_synced": false
   },
@@ -266,6 +272,7 @@
     "email": "1150464228@participante.local",
     "address": "Lojia",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE",
     "java_synced": false
   },
@@ -279,6 +286,7 @@
     "email": "lucas123@gmail.com",
     "address": null,
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE"
   },
   {
@@ -291,6 +299,7 @@
     "email": "lucasas122@gmail.com",
     "address": null,
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE"
   },
   {
@@ -332,6 +341,7 @@
     "email": "1150464230@participante.local",
     "address": "adasd",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE",
     "java_synced": false
   },
@@ -360,6 +370,7 @@
     "email": "1150464329@participante.local",
     "address": "sdfdfdsfdsf",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE",
     "java_synced": false
   },
@@ -374,6 +385,7 @@
     "email": "1102075392@participante.local",
     "address": "loxa",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
     "type": "DOCENTE",
     "java_synced": false
   },
@@ -388,10 +400,68 @@
     "email": "11056207123@participante.local",
     "address": "Loxa",
     "status": "ACTIVO",
+    "program": "FUNCIONAL",
+    "type": "ESTUDIANTE",
+    "java_synced": false
+  },
+  {
+    "id": 44,
+    "external_id": "33517b5a-7a54-48a2-a7d9-69201e70f340",
+    "firstName": "Juanito",
+    "lastName": "Pereiraaa",
+    "age": 23,
+    "dni": "1150464233",
+    "phone": "0963632126",
+    "email": "1150464233@participante.local",
+    "address": "Lojita",
+    "status": "ACTIVO",
+    "program": "FUNCIONAL",
+    "type": "DOCENTE",
+    "java_synced": false
+  },
+  {
+    "id": 45,
+    "external_id": "a17dd442-d7c0-449d-94b6-a9792e7a0254",
+    "firstName": "Darwin",
+    "lastName": "Granda",
+    "age": 30,
+    "dni": "1102075332",
+    "phone": "0963632127",
+    "email": "1102075332@participante.local",
+    "address": "Puyango",
+    "status": "ACTIVO",
+    "program": "FUNCIONAL",
+    "type": "ESTUDIANTE",
+    "java_synced": false
+  },
+  {
+    "id": 46,
+    "external_id": "982317ee-a73e-4fa7-9952-21dcac983458",
+    "firstName": "Darwin",
+    "lastName": "Sarango",
+    "age": 23,
+    "dni": "1150474920",
+    "phone": "0963632127",
+    "email": "1150474920@participante.local",
+    "address": "Tierras Coloradas",
+    "status": "ACTIVO",
     "type": "ESTUDIANTE",
     "program": "FUNCIONAL",
-    "program_name": "Programa 1",
-    "program_id": 1,
+    "java_synced": false
+  },
+  {
+    "id": 47,
+    "external_id": "daf2c354-7c76-4e21-9cc8-bba62f644368",
+    "firstName": "Elias",
+    "lastName": "Pomada",
+    "age": 23,
+    "dni": "1102075313",
+    "phone": "0963632122",
+    "email": "1102075313@participante.local",
+    "address": "Loja",
+    "status": "ACTIVO",
+    "type": "ESTUDIANTE",
+    "program": "FUNCIONAL",
     "java_synced": false
   }
 ]

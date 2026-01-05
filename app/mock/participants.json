@@ -7,8 +7,7 @@
     "email": "juan.garcia@example.com",
     "phone": "0991234567",
     "status": "active",
-    "program_id": 1,
-    "program_name": "Programa 1",
+    "program": "FUNCIONAL",
     "type": "FUNCIONAL"
   },
   {
@@ -19,8 +18,7 @@
     "email": "maria.lopez@example.com",
     "phone": "0992345678",
     "status": "active",
-    "program_id": 1,
-    "program_name": "Programa 1",
+    "program": "FUNCIONAL",
     "type": "FUNCIONAL"
   },
   {
@@ -31,8 +29,7 @@
     "email": "carlos.rodriguez@example.com",
     "phone": "0993456789",
     "status": "active",
-    "program_id": 1,
-    "program_name": "Programa 1",
+    "program": "FUNCIONAL",
     "type": "FUNCIONAL"
   },
   {
@@ -43,8 +40,7 @@
     "email": "ana.martinez@example.com",
     "phone": "0994567890",
     "status": "active",
-    "program_id": 1,
-    "program_name": "Programa 1",
+    "program": "FUNCIONAL",
     "type": "FUNCIONAL"
   },
   {
@@ -55,8 +51,7 @@
     "email": "pedro.sanchez@example.com",
     "phone": "0995678901",
     "status": "active",
-    "program_id": 1,
-    "program_name": "Programa 1",
+    "program": "FUNCIONAL",
     "type": "FUNCIONAL"
   },
   {
@@ -67,8 +62,7 @@
     "email": "lucia.fernandez@example.com",
     "phone": "0996789012",
     "status": "active",
-    "program_id": 1,
-    "program_name": "Programa 1",
+    "program": "FUNCIONAL",
     "type": "FUNCIONAL"
   },
   {
@@ -79,8 +73,7 @@
     "email": "diego.torres@example.com",
     "phone": "0997890123",
     "status": "active",
-    "program_id": 1,
-    "program_name": "Programa 1",
+    "program": "FUNCIONAL",
     "type": "FUNCIONAL"
   },
   {
@@ -91,8 +84,7 @@
     "email": "sofia.ramirez@example.com",
     "phone": "0998901234",
     "status": "active",
-    "program_id": 1,
-    "program_name": "Programa 1",
+    "program": "FUNCIONAL",
     "type": "FUNCIONAL"
   },
   {
@@ -104,8 +96,7 @@
     "phone": "",
     "age": 8,
     "status": "active",
-    "program_id": 2,
-    "program_name": "Iniciación",
+    "program": "INICIACION",
     "type": "INICIACION",
     "responsible": {
       "name": "María González",
@@ -123,8 +114,7 @@
     "phone": "",
     "age": 10,
     "status": "active",
-    "program_id": 2,
-    "program_name": "Iniciación",
+    "program": "INICIACION",
     "type": "INICIACION",
     "responsible": {
       "name": "Padre de Kevin",
@@ -142,8 +132,7 @@
     "phone": "",
     "age": 9,
     "status": "active",
-    "program_id": 2,
-    "program_name": "Iniciación",
+    "program": "INICIACION",
     "type": "INICIACION",
     "responsible": {
       "name": "Andrea Morales",
@@ -161,8 +150,7 @@
     "phone": "",
     "age": 7,
     "status": "active",
-    "program_id": 2,
-    "program_name": "Iniciación",
+    "program": "INICIACION",
     "type": "INICIACION",
     "responsible": {
       "name": "Carlos Jiménez",
@@ -179,8 +167,51 @@
     "email": "11056207123@participante.local",
     "phone": "0963632122",
     "status": "active",
-    "program_id": 1,
-    "program_name": "Programa 1",
+    "program": "FUNCIONAL",
     "type": "ESTUDIANTE"
+  },
+  {
+    "external_id": "33517b5a-7a54-48a2-a7d9-69201e70f340",
+    "firstName": "Juanito",
+    "lastName": "Pereiraaa",
+    "dni": "1150464233",
+    "email": "1150464233@participante.local",
+    "phone": "0963632126",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "DOCENTE"
+  },
+  {
+    "external_id": "a17dd442-d7c0-449d-94b6-a9792e7a0254",
+    "firstName": "Darwin",
+    "lastName": "Granda",
+    "dni": "1102075332",
+    "email": "1102075332@participante.local",
+    "phone": "0963632127",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "ESTUDIANTE"
+  },
+  {
+    "external_id": "982317ee-a73e-4fa7-9952-21dcac983458",
+    "firstName": "Darwin",
+    "lastName": "Sarango",
+    "dni": "1150474920",
+    "email": "1150474920@participante.local",
+    "phone": "0963632127",
+    "status": "active",
+    "type": "ESTUDIANTE",
+    "program": "FUNCIONAL"
+  },
+  {
+    "external_id": "daf2c354-7c76-4e21-9cc8-bba62f644368",
+    "firstName": "Elias",
+    "lastName": "Pomada",
+    "dni": "1102075313",
+    "email": "1102075313@participante.local",
+    "phone": "0963632122",
+    "status": "active",
+    "type": "ESTUDIANTE",
+    "program": "FUNCIONAL"
   }
 ]

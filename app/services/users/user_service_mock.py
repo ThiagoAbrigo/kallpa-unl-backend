@@ -322,8 +322,9 @@ class UserServiceMock:
         new_id = max([u.get("id", 0) for u in users], default=0) + 1
         external_id = str(uuid.uuid4())
 
-        program_name = "Iniciación" if program == "INICIACION" else "Programa 1"
-        program_id = 2 if program == "INICIACION" else 1
+        # program_name/id removed as they are redundant with 'program'
+        # program_name = "Iniciación" if program == "INICIACION" else "Funcional"
+        # program_id = 2 if program == "INICIACION" else 1
 
         new_participant = {
             "id": new_id,
@@ -338,8 +339,8 @@ class UserServiceMock:
             "status": "ACTIVO",
             "type": participant_type,
             "program": program,
-            "program_name": program_name,
-            "program_id": program_id,
+            "type": participant_type,
+            "program": program,
         }
 
         if token:
@@ -392,9 +393,9 @@ class UserServiceMock:
             "email": participant_data.get("email", ""),
             "phone": participant_data.get("phone", ""),
             "status": "active",
-            "program_id": participant_data.get("program_id", 1),
-            "program_name": participant_data.get("program_name", "Programa 1"),
+            "status": "active",
             "type": participant_data.get("type", "FUNCIONAL"),
+            "program": participant_data.get("program", "FUNCIONAL"),
         }
 
         if participant_data.get("responsible"):

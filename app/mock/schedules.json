@@ -2,7 +2,7 @@
     {
         "external_id": "f59aa061-f234-42d8-8e9d-b561b62c322a",
         "program_id": 1,
-        "program_name": "Programa 1",
+        "program_name": "Funcional",
         "day_of_week": "monday",
         "start_time": "08:00",
         "end_time": "09:00",
@@ -18,7 +18,7 @@
     {
         "external_id": "1f2ed4dc-a38e-4292-975c-56605e5eccb0",
         "program_id": 1,
-        "program_name": "Programa 1",
+        "program_name": "Funcional",
         "day_of_week": "friday",
         "start_time": "20:00",
         "end_time": "21:00",
@@ -34,7 +34,7 @@
     {
         "external_id": "d743d4f9-5a16-4382-9a81-59661fa1a050",
         "program_id": 1,
-        "program_name": "Programa 1",
+        "program_name": "Funcional",
         "day_of_week": "monday",
         "start_time": "09:00",
         "end_time": "10:00",
@@ -50,7 +50,7 @@
     {
         "external_id": "22e620e8-8073-409a-8873-409ae652b01c",
         "program_id": 1,
-        "program_name": "Programa 1",
+        "program_name": "Funcional",
         "day_of_week": "thursday",
         "start_time": "08:00",
         "end_time": "09:00",
@@ -66,7 +66,7 @@
     {
         "external_id": "b10c8312-e955-4392-923f-285bbd757f5d",
         "program_id": 1,
-        "program_name": "Programa 1",
+        "program_name": "Funcional",
         "day_of_week": "monday",
         "start_time": "11:00",
         "end_time": "12:00",
@@ -114,7 +114,7 @@
     {
         "external_id": "b4e48716-fed7-459c-829a-447c0fe8e0af",
         "program_id": 1,
-        "program_name": "Programa 1",
+        "program_name": "Funcional",
         "day_of_week": "monday",
         "start_time": "11:01",
         "end_time": "12:00",
