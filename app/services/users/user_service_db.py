@@ -57,7 +57,7 @@ class UserServiceDB:
                     "dni": u.dni,
                     "status": u.status,
                     "type": "PASANTE",
-                    "java_external": u.java_external
+                    "java_external": u.java_external,
                 }
                 for u in interns
             ]
@@ -94,7 +94,7 @@ class UserServiceDB:
                 address=data.get("address"),
                 status="ACTIVO",
                 type=data.get("type", "EXTERNO"),
-                program=data.get("program")
+                program=data.get("program"),
             )
 
             java_synced = False
@@ -391,7 +391,7 @@ class UserServiceDB:
             address=data.get("address"),
             status="ACTIVO",
             type="INICIACION" if is_minor else data.get("type", "EXTERNO"),
-            program=program
+            program=program,
         )
 
     def _create_responsible(self, data, participant):
@@ -451,7 +451,7 @@ class UserServiceDB:
         try:
             # ---------- Validación general ----------
             if not data or not isinstance(data, dict):
-                return {"status": "error", "msg": "Datos inválidos", "code": 400}
+                return error_response("Datos inválidos", 400)
 
             # ---------- Campos obligatorios ----------
             required_fields = [
@@ -463,90 +463,112 @@ class UserServiceDB:
                 "role",
             ]
 
+            missing_fields = {}
             for field in required_fields:
                 if field not in data or not str(data[field]).strip():
-                    return {
-                        "status": "error",
-                        "msg": f"El campo '{field}' es obligatorio",
-                        "code": 400,
-                    }
+                    missing_fields[field] = "Campo requerido"
+
+            if missing_fields:
+                return error_response(
+                    "Campo requerido",
+                    code=400,
+                    data=missing_fields,  # <-- Aquí devuelves el campo con el mensaje
+                )
+
+            # ---------- Validar DNI ----------
+            dni = str(data["dni"]).strip()
+            if not dni.isdigit() or len(dni) != 10:
+                return error_response(
+                    "Cédula inválida. Debe tener exactamente 10 dígitos",
+                    400,
+                    data={"dni": "Cédula inválida"},
+                )
 
             # ---------- Validar rol ----------
             allowed_roles = ["DOCENTE", "PASANTE", "ADMINISTRADOR"]
             if data["role"] not in allowed_roles:
-                return {"status": "error", "msg": "Rol inválido", "code": 400}
+                return error_response(
+                    "Rol inválido", 400, data={"role": "Rol inválido"}
+                )
 
             # ---------- Validar duplicados ----------
-            if User.query.filter_by(dni=data["dni"]).first():
-                return {
-                    "status": "error",
-                    "msg": "El DNI ya está registrado",
-                    "code": 400,
-                }
+            if User.query.filter_by(dni=dni).first():
+                return error_response(
+                    "El DNI ya está registrado", 400, data={"dni": "DNI duplicado"}
+                )
 
-            if User.query.filter_by(email=data["email"].lower()).first():
-                return {
-                    "status": "error",
-                    "msg": "El correo ya está registrado",
-                    "code": 400,
-                }
+            if User.query.filter_by(email=data["email"].lower().strip()).first():
+                return error_response(
+                    "El correo ya está registrado",
+                    400,
+                    data={"email": "Correo duplicado"},
+                )
 
             # ---------- Hashear contraseña ----------
             hashed_password = generate_password_hash(
                 data["password"], method="pbkdf2:sha256", salt_length=16
             )
 
+            # ---------- Valores por defecto ----------
+            phone = data.get("phone")
+            address = data.get("address")
+            phone = phone.strip() if phone and str(phone).strip() else "NINGUNA"
+            address = address.strip() if address and str(address).strip() else "NINGUNA"
+
             # ---------- Crear usuario ----------
             user = User(
                 firstName=data["firstName"].strip(),
                 lastName=data["lastName"].strip(),
-                dni=data["dni"].strip(),
-                phone=data.get("phone"),
+                dni=dni,
+                phone=phone,
+                address=address,
                 email=data["email"].lower().strip(),
                 password=hashed_password,
                 role=data["role"],
                 status="ACTIVO",
             )
+
             db.session.add(user)
             db.session.commit()
 
             # ---------- Sincronizar con Java ----------
             token = self._get_token()
+            java_synced = False
             if token:
                 java_data = {
                     "firstName": user.firstName,
                     "lastName": user.lastName,
                     "dni": user.dni,
-                    "phone": user.phone or "0000000000",
-                    "address": user.address or "Sin dirección",
+                    "phone": user.phone,
+                    "address": user.address,
                     "type": user.role,
                     "email": user.email,
-                    "password": data["password"],  # Usar password sin hashear para Java
+                    "password": data["password"],  # sin hashear
                 }
-                
+
                 java_result = java_sync.create_person_with_account(java_data, token)
-                
                 if java_result and java_result.get("success"):
                     user.java_external = java_result.get("data", {}).get("external")
                     db.session.commit()
-                    print(f"[UserService] ✅ Usuario sincronizado con Java: {user.java_external}")
+                    java_synced = True
                 else:
-                    print(f"[UserService] ⚠️ No se pudo sincronizar con Java: {java_result}")
+                    print(
+                        f"[UserService] ⚠️ No se pudo sincronizar con Java: {java_result}"
+                    )
 
-            return {
-                "status": "success",
-                "msg": "Usuario registrado correctamente",
-                "code": 200,
-                "data": {
+            return success_response(
+                "Usuario registrado correctamente",
+                data={
                     "external_id": user.external_id,
                     "role": user.role,
-                    "java_synced": bool(user.java_external)
+                    "java_synced": java_synced,
                 },
-            }
+                code=200,
+            )
 
         except Exception as e:
             db.session.rollback()
-            return {"status": "error", "msg": f"Error interno: {str(e)}", "code": 500}
+            return error_response(f"Error interno del servidor: {str(e)}", 500)
 
     def get_profile(self, external_id):
         """
@@ -557,7 +579,7 @@ class UserServiceDB:
             user = User.query.filter_by(external_id=external_id).first()
             if not user:
                 return error_response("Usuario no encontrado", 404)
-            
+
             return success_response(
                 msg="Perfil obtenido correctamente",
                 data={
@@ -569,8 +591,8 @@ class UserServiceDB:
                     "phone": user.phone,
                     "address": user.address,
                     "role": user.role,
-                    "status": user.status
-                }
+                    "status": user.status,
+                },
             )
         except Exception as e:
             print(f"[UserService] Error obteniendo perfil: {str(e)}")
@@ -584,10 +606,10 @@ class UserServiceDB:
         token_auth: No se usa - se obtiene token fresco de Java
         """
         import requests
-        
+
         try:
             print(f"[UserService] Buscando usuario con external_id: {external_id}")
-            
+
             user = User.query.filter_by(external_id=external_id).first()
             if not user:
                 print(f"[UserService] Usuario no encontrado")
@@ -595,40 +617,49 @@ class UserServiceDB:
 
             print(f"[UserService] Usuario encontrado: {user.firstName} {user.lastName}")
 
-            if 'firstName' in data:
-                user.firstName = data['firstName']
-            if 'lastName' in data:
-                user.lastName = data['lastName']
-            if 'phone' in data:
-                user.phone = data['phone']
-            if 'address' in data:
-                user.address = data['address']
-            
+            if "firstName" in data:
+                user.firstName = data["firstName"]
+            if "lastName" in data:
+                user.lastName = data["lastName"]
+            if "phone" in data:
+                user.phone = data["phone"]
+            if "address" in data:
+                user.address = data["address"]
+
             db.session.commit()
             print(f"[UserService] Datos actualizados en BD local")
 
             java_synced = False
             java_error_msg = None
-            
+
             try:
-                print(f"[UserService] Haciendo login a Java para obtener external y token frescos...")
-                
-                java_login_resp = requests.post(
-                    'http://localhost:8096/api/person/login',
-                    json={'email': user.email, 'password': data.get('password', '12345678')},
-                    timeout=5
+                print(
+                    f"[UserService] Haciendo login a Java para obtener external y token frescos..."
                 )
-                
-                print(f"[UserService] Java login response: {java_login_resp.status_code}")
-                
+
+                java_login_resp = requests.post(
+                    "http://localhost:8096/api/person/login",
+                    json={
+                        "email": user.email,
+                        "password": data.get("password", "12345678"),
+                    },
+                    timeout=5,
+                )
+
+                print(
+                    f"[UserService] Java login response: {java_login_resp.status_code}"
+                )
+
                 if java_login_resp.status_code == 200:
-                    java_data = java_login_resp.json().get('data', {})
-                    java_external = java_data.get('external')
-                    java_token = java_data.get('token')
-                    
+                    java_data = java_login_resp.json().get("data", {})
+                    java_external = java_data.get("external")
+                    java_token = java_data.get("token")
+
                     print(f"[UserService] Java external FRESCO: {java_external}")
-                    print(f"[UserService] Java token FRESCO: {java_token[:30] if java_token else 'None'}...")
-                    
+                    print(
+                        f"[UserService] Java token FRESCO: {java_token[:30] if java_token else 'None'}..."
+                    )
+
                     if java_external and java_token:
                         rol_java = "EXTERNOS"
                         if user.role == "ESTUDIANTE":
@@ -644,26 +675,34 @@ class UserServiceDB:
                             "external": java_external,
                             "type_identification": "CEDULA",
                             "type_stament": rol_java,
-                            "direction": user.address if user.address else "Sin dirección",
-                            "phono": user.phone if user.phone else "0000000000"
+                            "direction": (
+                                user.address if user.address else "Sin dirección"
+                            ),
+                            "phono": user.phone if user.phone else "0000000000",
                         }
 
                         print(f"[UserService] Payload para Java: {payload_java}")
-                        
-                        java_resp = java_sync.update_person_in_java(payload_java, java_token)
-                        
-                        if java_resp and java_resp.get('status') == 'success':
+
+                        java_resp = java_sync.update_person_in_java(
+                            payload_java, java_token
+                        )
+
+                        if java_resp and java_resp.get("status") == "success":
                             java_synced = True
                             print(f"[UserService] Sincronizado con Java exitosamente")
                         else:
-                            java_error_msg = java_resp.get('message') if java_resp else 'Sin respuesta'
+                            java_error_msg = (
+                                java_resp.get("message")
+                                if java_resp
+                                else "Sin respuesta"
+                            )
                             print(f"[UserService] Java update falló: {java_error_msg}")
                     else:
                         java_error_msg = "No se obtuvo external/token de Java"
                 else:
                     java_error_msg = f"Login Java falló: {java_login_resp.status_code}"
                     print(f"[UserService] {java_error_msg}")
-                    
+
             except requests.exceptions.RequestException as e:
                 java_error_msg = f"Error conexión Java: {str(e)}"
                 print(f"[UserService] {java_error_msg}")
@@ -678,18 +717,41 @@ class UserServiceDB:
                 "address": user.address,
                 "role": user.role,
                 "status": user.status,
-                "java_synced": java_synced
+                "java_synced": java_synced,
             }
-            
+
             if java_synced:
-                return success_response(msg="Perfil actualizado correctamente", data=response_data)
+                return success_response(
+                    msg="Perfil actualizado correctamente", data=response_data
+                )
             else:
                 return success_response(
                     msg=f"Perfil actualizado localmente. Java: {java_error_msg}",
-                    data=response_data
+                    data=response_data,
                 )
 
         except Exception as e:
             db.session.rollback()
             print(f"[UserService] Error: {str(e)}")
             return error_response(f"Error actualizando perfil: {str(e)}")
+
+    def get_active_participants_count(self):
+        """
+        Devuelve el total de participantes activos mayores y menores de edad.
+        """
+        try:
+            total_adult = Participant.query.filter(
+                Participant.age >= 18, Participant.status == "ACTIVO"
+            ).count()
+
+            total_minor = Participant.query.filter(
+                Participant.age < 18, Participant.status == "ACTIVO"
+            ).count()
+
+            return success_response(
+                msg="Totales de participantes activos obtenidos correctamente",
+                data={"adult": total_adult, "minor": total_minor},
+            )
+
+        except Exception as e:
+            return error_response("Error interno del servidor", code=500)

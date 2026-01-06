@@ -11,6 +11,7 @@ from .evaluationResult import EvaluationResult
 from .test import Test
 from .testExercise import TestExercise
 from .user import User
+from.activityLog import ActivityLog
 
 __all__ = [
     "Attendance",
@@ -25,5 +26,6 @@ __all__ = [
     "EvaluationResult",
     "Test",
     "TestExercise",
-    "User"
+    "User",
+    "ActivityLog"
 ]

@@ -16,9 +16,7 @@ class AssessmentController:
         return assessment_service.get_assessments_by_participant_external_id(
             participant_external_id
         )
-
-    def get_anthropometric_history(self, months: int = 3):
-        return assessment_service.get_anthropometric_history(months)
+    
+    def get_bmi_distribution(self):
+        return assessment_service.get_bmi_distribution_chart()
         
-    def get_average_bmi(self):
-        return assessment_service.get_average_bmi()

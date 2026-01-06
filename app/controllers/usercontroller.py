@@ -43,3 +43,6 @@ class UserController:
         Si es menor, espera datos de responsable.
         """
         return user_service.create_participant(data)
+
+    def get_active_participants_count(self):
+        return user_service.get_active_participants_count()

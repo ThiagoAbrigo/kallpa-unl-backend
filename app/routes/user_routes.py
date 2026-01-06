@@ -134,3 +134,7 @@ def update_user_profile():
     except Exception as e:
         print(f"[ERROR] update_user_profile: {str(e)}")
         return jsonify({"status": "error", "msg": f"Error: {str(e)}", "code": 500}), 500
+
+@user_bp.route("/participants/active/count", methods=["GET"])
+def get_active_participants_count():
+    return response_handler(controller.get_active_participants_count())
