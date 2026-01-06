@@ -10,6 +10,8 @@ def response_handler(result):
     return jsonify(result), status_code
 
 
+# ========== ATTENDANCE MANAGEMENT ==========
+
 @attendance_bp.route("/attendance", methods=["POST"])
 def register_attendance():
     """Registrar una asistencia individual"""
@@ -35,7 +37,6 @@ def list_attendances():
         "date": request.args.get("date"),
         "status": request.args.get("status")
     }
-    # Remover filtros vacíos
     filters = {k: v for k, v in filters.items() if v}
     result = controller.get_attendances(filters if filters else None)
     return response_handler(result)
@@ -70,12 +71,13 @@ def get_summary(participant_external_id):
     return response_handler(result)
 
 
-# ========== RUTAS PÚBLICAS v2 PARA EL FRONTEND ==========
+# ========== PUBLIC / FRONTEND ROUTES ==========
 
 @attendance_bp.route("/attendance/v2/public/participants", methods=["GET"])
 def get_participants():
     """Obtener todos los participantes"""
-    result = controller.get_participants()
+    program = request.args.get("program")
+    result = controller.get_participants(program)
     return response_handler(result)
 
 
@@ -119,9 +121,12 @@ def get_today_sessions():
 @attendance_bp.route("/attendance/v2/public/history", methods=["GET"])
 def get_history():
     """Obtener historial de asistencias con filtros opcionales"""
-    date_from = request.args.get("date_from")
-    date_to = request.args.get("date_to")
-    result = controller.get_history(date_from, date_to)
+    date_from = request.args.get("date_from") or request.args.get("startDate")
+    date_to = request.args.get("date_to") or request.args.get("endDate")
+    schedule_id = request.args.get("schedule_id") or request.args.get("scheduleId")
+    day_filter = request.args.get("day")
+    
+    result = controller.get_history(date_from, date_to, schedule_id, day_filter)
     return response_handler(result)
 
 
@@ -155,7 +160,6 @@ def delete_session_attendance(schedule_id, date):
 
 
 # ========== RUTAS SIMPLIFICADAS PARA EL NUEVO FRONTEND ==========
-# Estas rutas son más simples y coinciden con lo que espera el nuevo frontend
 
 @attendance_bp.route("/attendance/participants", methods=["GET"])
 def get_participants_simple():
@@ -194,9 +198,10 @@ def delete_schedule_simple(schedule_id):
     return response_handler(result)
 
 
+# ========== RUTAS LEGACY (Compatibilidad Frontend) ==========
+
 @attendance_bp.route("/attendance/sessions/today", methods=["GET"])
-def get_today_sessions_simple():
-    """Obtener sesiones de hoy (ruta simplificada)"""
+def get_today_sessions_legacy():
     result = controller.get_today_sessions()
     return response_handler(result)
 
@@ -215,23 +220,24 @@ def get_history_simple():
     start_date = request.args.get("startDate") or request.args.get("date_from")
     end_date = request.args.get("endDate") or request.args.get("date_to")
     schedule_id = request.args.get("scheduleId")
-    day_filter = request.args.get("day")  # Filter by day of week (monday, tuesday, etc.)
+    day_filter = request.args.get("day")
     result = controller.get_history(start_date, end_date, schedule_id, day_filter)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/session/<schedule_id>/<date>", methods=["GET"])
-def get_session_detail_simple(schedule_id, date):
-    """Obtener detalle de una sesión específica (ruta simplificada)"""
+def get_session_detail_legacy(schedule_id, date):
+    """Obtener detalle de una sesión específica (ruta legacy)"""
     result = controller.get_session_detail(schedule_id, date)
     return response_handler(result)
 
 
 @attendance_bp.route("/attendance/session/<schedule_id>/<date>", methods=["DELETE"])
-def delete_session_attendance_simple(schedule_id, date):
-    """Eliminar registro de asistencia de una fecha (ruta simplificada)"""
+def delete_session_attendance_legacy(schedule_id, date):
+    """Eliminar registro de asistencia de una fecha (ruta legacy)"""
     result = controller.delete_session_attendance(schedule_id, date)
     return response_handler(result)
+
 
 @attendance_bp.route("/attendance/today/average", methods=["GET"])
 def get_today_attendance_average():

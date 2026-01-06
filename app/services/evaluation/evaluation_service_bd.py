@@ -186,7 +186,8 @@ class EvaluationServiceDB:
         self,
         participant_external_id,
         test_external_id,
-        months=6,
+        start_date,
+        end_date,
     ):
         try:
             # -------------------------
@@ -198,6 +199,26 @@ class EvaluationServiceDB:
             if not test_external_id:
                 return error_response("Debe seleccionar un test", 400)
 
+            if not start_date or not end_date:
+                return error_response("Debe indicar fecha inicio y fecha fin", 400)
+
+            # -------------------------
+            # Parsear fechas
+            # -------------------------
+            try:
+                start_date = datetime.fromisoformat(start_date).date()
+                end_date = datetime.fromisoformat(end_date).date()
+            except ValueError:
+                return error_response("Formato de fecha inválido (YYYY-MM-DD)", 400)
+
+            if start_date > end_date:
+                return error_response(
+                    "La fecha inicio no puede ser mayor a la fecha fin", 400
+                )
+
+            # -------------------------
+            # Buscar participante y test
+            # -------------------------
             participant = Participant.query.filter_by(
                 external_id=participant_external_id
             ).first()
@@ -211,34 +232,18 @@ class EvaluationServiceDB:
                 return error_response("Test no encontrado", 404)
 
             # -------------------------
-            # Validar periodo permitido
+            # Obtener evaluaciones (FILTRADO CORRECTO)
             # -------------------------
-            try:
-                months = int(months)
-            except Exception:
-                months = 6
-
-            if months not in [3, 6, 9, 12]:
-                months = 6
-
-            end_date = date.today()
-            start_date = end_date - timedelta(days=months * 30)
-
-            # -------------------------
-            # Obtener evaluaciones
-            # -------------------------
-            N = 2
             evaluations = (
                 Evaluation.query.filter(
                     Evaluation.participant_id == participant.id,
                     Evaluation.test_id == test.id,
+                    Evaluation.date >= start_date,
+                    Evaluation.date <= end_date,
                 )
-                .order_by(Evaluation.date.desc())
-                .limit(N)
+                .order_by(Evaluation.date.asc())
                 .all()
             )
-
-            evaluations.reverse()
 
             if not evaluations:
                 return success_response(
@@ -246,7 +251,8 @@ class EvaluationServiceDB:
                     data={
                         "participant_external_id": participant_external_id,
                         "test_external_id": test_external_id,
-                        "months": months,
+                        "start_date": start_date.isoformat(),
+                        "end_date": end_date.isoformat(),
                         "exercises": {},
                     },
                 )
@@ -296,7 +302,7 @@ class EvaluationServiceDB:
 
                     ex["trend"] = {
                         "status": "Datos insuficientes",
-                        "description": "Se requiere al menos 2 evaluaciones para comparar",
+                        "description": "Se requieren al menos 2 evaluaciones",
                     }
                     continue
 
@@ -334,7 +340,6 @@ class EvaluationServiceDB:
                 data={
                     "participant_external_id": participant_external_id,
                     "test_external_id": test_external_id,
-                    "months": months,
                     "start_date": start_date.isoformat(),
                     "end_date": end_date.isoformat(),
                     "exercises": history,
@@ -343,6 +348,168 @@ class EvaluationServiceDB:
 
         except Exception as e:
             return error_response(f"Internal error: {str(e)}", 500)
+
+    # def get_history(
+    #     self,
+    #     participant_external_id,
+    #     test_external_id,
+    #     months=6,
+    # ):
+    #     try:
+    #         # -------------------------
+    #         # Validaciones básicas
+    #         # -------------------------
+    #         if not participant_external_id:
+    #             return error_response("Debe seleccionar un participante", 400)
+
+    #         if not test_external_id:
+    #             return error_response("Debe seleccionar un test", 400)
+
+    #         participant = Participant.query.filter_by(
+    #             external_id=participant_external_id
+    #         ).first()
+
+    #         if not participant:
+    #             return error_response("Participante no encontrado", 404)
+
+    #         test = Test.query.filter_by(external_id=test_external_id).first()
+
+    #         if not test:
+    #             return error_response("Test no encontrado", 404)
+
+    #         # -------------------------
+    #         # Validar periodo permitido
+    #         # -------------------------
+    #         try:
+    #             months = int(months)
+    #         except Exception:
+    #             months = 6
+
+    #         if months not in [3, 6, 9, 12]:
+    #             months = 6
+
+    #         end_date = date.today()
+    #         start_date = end_date - timedelta(days=months * 30)
+
+    #         # -------------------------
+    #         # Obtener evaluaciones
+    #         # -------------------------
+    #         N = 2
+    #         evaluations = (
+    #             Evaluation.query.filter(
+    #                 Evaluation.participant_id == participant.id,
+    #                 Evaluation.test_id == test.id,
+    #             )
+    #             .order_by(Evaluation.date.desc())
+    #             .limit(N)
+    #             .all()
+    #         )
+
+    #         evaluations.reverse()
+
+    #         if not evaluations:
+    #             return success_response(
+    #                 msg="No hay evaluaciones en el periodo seleccionado",
+    #                 data={
+    #                     "participant_external_id": participant_external_id,
+    #                     "test_external_id": test_external_id,
+    #                     "months": months,
+    #                     "exercises": {},
+    #                 },
+    #             )
+
+    #         # -------------------------
+    #         # Construir historial
+    #         # -------------------------
+    #         history = {}
+
+    #         for ev in evaluations:
+    #             for r in ev.results:
+    #                 if not r.exercise:
+    #                     continue
+
+    #                 ex_id = r.exercise.external_id
+
+    #                 if ex_id not in history:
+    #                     history[ex_id] = {
+    #                         "exercise_name": r.exercise.name,
+    #                         "unit": r.exercise.unit,
+    #                         "timeline": [],
+    #                     }
+
+    #                 history[ex_id]["timeline"].append(
+    #                     {
+    #                         "date": ev.date.isoformat(),
+    #                         "value": r.value,
+    #                     }
+    #                 )
+
+    #         # -------------------------
+    #         # Estadísticas y tendencia
+    #         # -------------------------
+    #         for ex in history.values():
+    #             values = [p["value"] for p in ex["timeline"]]
+
+    #             if len(values) < 2:
+    #                 ex["stats"] = {
+    #                     "count": len(values),
+    #                     "average": values[0] if values else None,
+    #                     "min": values[0] if values else None,
+    #                     "max": values[0] if values else None,
+    #                     "first_value": values[0] if values else None,
+    #                     "last_value": values[0] if values else None,
+    #                     "delta": None,
+    #                 }
+
+    #                 ex["trend"] = {
+    #                     "status": "Datos insuficientes",
+    #                     "description": "Se requiere al menos 2 evaluaciones para comparar",
+    #                 }
+    #                 continue
+
+    #             first = values[0]
+    #             last = values[-1]
+    #             delta = round(last - first, 2)
+
+    #             if delta > 0:
+    #                 trend_status = "Mejorando"
+    #             elif delta < 0:
+    #                 trend_status = "Disminuyendo"
+    #             else:
+    #                 trend_status = "Estable"
+
+    #             ex["stats"] = {
+    #                 "count": len(values),
+    #                 "average": round(sum(values) / len(values), 2),
+    #                 "min": min(values),
+    #                 "max": max(values),
+    #                 "first_value": first,
+    #                 "last_value": last,
+    #                 "delta": delta,
+    #             }
+
+    #             ex["trend"] = {
+    #                 "status": trend_status,
+    #                 "description": f"Inicio: {first} → Fin: {last} ({delta})",
+    #             }
+
+    #         # -------------------------
+    #         # Respuesta final
+    #         # -------------------------
+    #         return success_response(
+    #             msg="Historial de test obtenido correctamente",
+    #             data={
+    #                 "participant_external_id": participant_external_id,
+    #                 "test_external_id": test_external_id,
+    #                 "months": months,
+    #                 "start_date": start_date.isoformat(),
+    #                 "end_date": end_date.isoformat(),
+    #                 "exercises": history,
+    #             },
+    #         )
+
+    #     except Exception as e:
+    #         return error_response(f"Internal error: {str(e)}", 500)
 
     def list_tests_for_participant(self, participant_external_id):
         try:

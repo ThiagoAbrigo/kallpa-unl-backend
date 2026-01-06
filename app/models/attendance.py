@@ -15,6 +15,9 @@ class Attendance(db.Model):
     )
     schedule_id = db.Column(db.Integer, db.ForeignKey("schedule.id"), nullable=False)
 
+    participant = db.relationship("Participant", backref=db.backref("attendances", lazy=True))
+    schedule = db.relationship("Schedule", backref=db.backref("attendances", lazy=True))
+
     class Status:
         PRESENT = "present"
         ABSENT = "absent"

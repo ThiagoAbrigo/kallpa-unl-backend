@@ -12,17 +12,30 @@ class EvaluationController:
     def apply_test(self, data):
         return evaluation_service.apply_test(data)
 
+    # def history(
+    #     self,
+    #     participant_external_id,
+    #     test_external_id,
+    #     months=6,
+    # ):
+    #     return evaluation_service.get_history(
+    #         participant_external_id=participant_external_id,
+    #         test_external_id=test_external_id,
+    #         months=months,
+    #     )
+
     def history(
-        self,
-        participant_external_id,
-        test_external_id,
-        months=6,
-    ):
+    self,
+    participant_external_id,
+    test_external_id,
+    start_date,
+    end_date,
+):
         return evaluation_service.get_history(
             participant_external_id=participant_external_id,
             test_external_id=test_external_id,
-            months=months,
+            start_date=start_date,
+            end_date=end_date,
         )
-
     def list_tests_for_participant(self, participant_external_id):
         return evaluation_service.list_tests_for_participant(participant_external_id)

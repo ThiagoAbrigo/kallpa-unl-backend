@@ -41,62 +41,31 @@ class UserServiceDB:
             return error_response("Error interno del servidor", code=500)
 
     def get_participants_only(self):
-        """Obtiene solo los participantes (excluye docentes, administrativos, pasantes)."""
+        """Obtiene solo participantes (alias de get_all_users por ahora)"""
+        return self.get_all_users()
+
+    def get_interns(self):
+        """Obtiene usuarios con rol PASANTE"""
         try:
-            # Tipos que NO son participantes (son staff/profesores)
-            staff_types = ["DOCENTE", "ADMINISTRATIVO", "PASANTE", "PROFESOR", "ADMIN"]
-
-            # Filtrar solo participantes activos que no sean staff
-            participants = Participant.query.filter(
-                Participant.status == "ACTIVO", ~Participant.type.in_(staff_types)
-            ).all()
-
+            interns = User.query.filter_by(role="PASANTE").all()
             data = [
                 {
-                    "external_id": p.external_id,
-                    "firstName": p.firstName,
-                    "lastName": p.lastName,
-                    "email": p.email,
-                    "dni": p.dni,
-                    "age": p.age,
-                    "phone": p.phone,
-                    "status": p.status,
-                    "type": p.type,
+                    "external_id": u.external_id,
+                    "firstName": u.firstName,
+                    "lastName": u.lastName,
+                    "email": u.email,
+                    "dni": u.dni,
+                    "status": u.status,
+                    "type": "PASANTE",
+                    "java_external": u.java_external,
                 }
-                for p in participants
+                for u in interns
             ]
-
-            return success_response(
-                msg="Participantes obtenidos correctamente", data=data
-            )
+            return success_response(msg="Pasantes listados correctamente", data=data)
         except Exception as e:
-            return error_response(f"Error interno del servidor: {str(e)}", code=500)
+            return error_response(f"Error obteniendo pasantes: {str(e)}", code=500)
 
-    def get_pasantes(self):
-        """Obtiene solo los pasantes."""
-        try:
-            pasantes = Participant.query.filter(Participant.type == "PASANTE").all()
-
-            data = [
-                {
-                    "external_id": p.external_id,
-                    "firstName": p.firstName,
-                    "lastName": p.lastName,
-                    "email": p.email,
-                    "dni": p.dni,
-                    "age": p.age,
-                    "phone": p.phone,
-                    "status": p.status,
-                    "type": p.type,
-                }
-                for p in pasantes
-            ]
-
-            return success_response(msg="Pasantes obtenidos correctamente", data=data)
-        except Exception as e:
-            return error_response(f"Error interno del servidor: {str(e)}", code=500)
-
-    def create_user(self, data):
+    # def create_user(self, data):
         """Crea usuario en PostgreSQL y lo sincroniza con el microservicio Java."""
         token = self._get_token()
 
@@ -109,6 +78,12 @@ class UserServiceDB:
                         msg="Usuario ya existe en el sistema central", code=400
                     )
 
+            # Validate program
+            program = data.get("program")
+            valid_programs = ["INICIACION", "FUNCIONAL"]
+            if program and program not in valid_programs:
+                return error_response(f"Programa inválido. Use: {valid_programs}")
+
             participant = Participant(
                 firstName=data.get("firstName"),
                 lastName=data.get("lastName"),
@@ -119,6 +94,7 @@ class UserServiceDB:
                 address=data.get("address"),
                 status="ACTIVO",
                 type=data.get("type", "EXTERNO"),
+                program=data.get("program"),
             )
 
             java_synced = False
@@ -351,19 +327,21 @@ class UserServiceDB:
             responsible_data = data.get("responsible") if is_minor else None
 
             # 1. Validaciones
-            error = self._validate_participant(
-                participant_data, responsible_data, is_minor
-            )
-            if error:
-                return error
+            validation_result = self._validate_participant(participant_data, responsible_data, is_minor)
+            if validation_result:
+                return validation_result
+
+            # Validate program (Phase 3 requirement)
+            valid_programs = ["INICIACION", "FUNCIONAL"]
+            program = participant_data.get("program")
+            if program and program not in valid_programs:
+                return error_response(f"Programa inválido. Use: {valid_programs}")
 
             # 2. Verificar en Java
-            error = self._check_java_duplicate(participant_data, token)
-            if error:
-                return error
+            self._check_java_duplicate(participant_data, token)
 
             # 3. Crear participante
-            participant = self._build_participant(participant_data, is_minor)
+            participant = self._build_participant(participant_data, is_minor, program)
             db.session.add(participant)
 
             # # 4. Sincronizar Java
@@ -378,10 +356,10 @@ class UserServiceDB:
                 responsible = self._create_responsible(responsible_data, participant)
 
             db.session.commit()
-            # try:
-            #     self._sync_with_java(participant, participant_data, token, is_minor)
-            # except Exception as e:
-            #     print(f"[Warning] Error sincronizando con Java: {e}")
+            try:
+                self._sync_with_java(participant, participant_data, token, is_minor)
+            except Exception as e:
+                print(f"[Warning] Error sincronizando con Java: {e}")
 
             return success_response(
                 msg="Participante registrado correctamente",
@@ -395,11 +373,11 @@ class UserServiceDB:
 
         except Exception as e:
             db.session.rollback()
-            return error_response("Error interno del servidor", 500)
+            return error_response(str(e), 500)
 
     def _validate_participant(self, participant, responsible, is_minor):
         errors = {}
-        required_fields = ["firstName", "lastName", "dni", "age", "phone", "address"]
+        required_fields = ["firstName", "lastName", "dni", "age", "phone", "program", "email", "type"]
         for field in required_fields:
             if not participant.get(field):
                 errors[field] = "Campo requerido"
@@ -444,7 +422,7 @@ class UserServiceDB:
 
         return None
 
-    def _build_participant(self, data, is_minor):
+    def _build_participant(self, data, is_minor, program=None):
         return Participant(
             firstName=data.get("firstName"),
             lastName=data.get("lastName"),
@@ -455,6 +433,7 @@ class UserServiceDB:
             address=data.get("address"),
             status="ACTIVO",
             type="INICIACION" if is_minor else data.get("type", "EXTERNO"),
+            program=program,
         )
 
     def _create_responsible(self, data, participant):
@@ -477,12 +456,7 @@ class UserServiceDB:
 
         java_search = java_sync.search_by_identification(dni, token)
         if java_search.get("found"):
-            return error_response(
-                "El participante ya existe en el sistema central",
-                data={"dni": "DNI ya registrado en el sistema central"},
-            )
-
-        return None
+            raise Exception("Participante ya existe en el sistema central")
 
     def _sync_with_java(self, participant, participant_data, token, is_minor):
         if not token:
@@ -540,7 +514,7 @@ class UserServiceDB:
                 return error_response(
                     "Campo requerido",
                     code=400,
-                    data=missing_fields  # <-- Aquí devuelves el campo con el mensaje
+                    data=missing_fields,  # <-- Aquí devuelves el campo con el mensaje
                 )
 
             # ---------- Validar DNI ----------
@@ -549,20 +523,28 @@ class UserServiceDB:
                 return error_response(
                     "Cédula inválida. Debe tener exactamente 10 dígitos",
                     400,
-                    data={"dni": "Cédula inválida"}
+                    data={"dni": "Cédula inválida"},
                 )
 
             # ---------- Validar rol ----------
             allowed_roles = ["DOCENTE", "PASANTE", "ADMINISTRADOR"]
             if data["role"] not in allowed_roles:
-                return error_response("Rol inválido", 400, data={"role": "Rol inválido"})
+                return error_response(
+                    "Rol inválido", 400, data={"role": "Rol inválido"}
+                )
 
             # ---------- Validar duplicados ----------
             if User.query.filter_by(dni=dni).first():
-                return error_response("El DNI ya está registrado", 400, data={"dni": "DNI duplicado"})
+                return error_response(
+                    "El DNI ya está registrado", 400, data={"dni": "DNI duplicado"}
+                )
 
             if User.query.filter_by(email=data["email"].lower().strip()).first():
-                return error_response("El correo ya está registrado", 400, data={"email": "Correo duplicado"})
+                return error_response(
+                    "El correo ya está registrado",
+                    400,
+                    data={"email": "Correo duplicado"},
+                )
 
             # ---------- Hashear contraseña ----------
             hashed_password = generate_password_hash(
@@ -612,7 +594,9 @@ class UserServiceDB:
                     db.session.commit()
                     java_synced = True
                 else:
-                    print(f"[UserService] ⚠️ No se pudo sincronizar con Java: {java_result}")
+                    print(
+                        f"[UserService] ⚠️ No se pudo sincronizar con Java: {java_result}"
+                    )
 
             return success_response(
                 "Usuario registrado correctamente",
@@ -627,7 +611,6 @@ class UserServiceDB:
         except Exception as e:
             db.session.rollback()
             return error_response(f"Error interno del servidor: {str(e)}", 500)
-
 
     def get_profile(self, external_id):
         """
@@ -793,3 +776,24 @@ class UserServiceDB:
             db.session.rollback()
             print(f"[UserService] Error: {str(e)}")
             return error_response(f"Error actualizando perfil: {str(e)}")
+
+    def get_active_participants_count(self):
+        """
+        Devuelve el total de participantes activos mayores y menores de edad.
+        """
+        try:
+            total_adult = Participant.query.filter(
+                Participant.age >= 18, Participant.status == "ACTIVO"
+            ).count()
+
+            total_minor = Participant.query.filter(
+                Participant.age < 18, Participant.status == "ACTIVO"
+            ).count()
+
+            return success_response(
+                msg="Totales de participantes activos obtenidos correctamente",
+                data={"adult": total_adult, "minor": total_minor},
+            )
+
+        except Exception as e:
+            return error_response("Error interno del servidor", code=500)

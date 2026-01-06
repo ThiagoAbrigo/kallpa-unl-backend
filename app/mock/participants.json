@@ -1,7 +1,217 @@
 [
-  {"external_id": "part-001-uuid", "firstName": "Juan", "lastName": "García", "dni": "1104567890", "email": "juan.garcia@example.com", "phone": "0991234567", "status": "active"},
-  {"external_id": "part-002-uuid", "firstName": "María", "lastName": "López", "dni": "1105678901", "email": "maria.lopez@example.com", "phone": "0992345678", "status": "active"},
-  {"external_id": "part-003-uuid", "firstName": "Carlos", "lastName": "Rodríguez", "dni": "1106789012", "email": "carlos.rodriguez@example.com", "phone": "0993456789", "status": "active"},
-  {"external_id": "part-004-uuid", "firstName": "Ana", "lastName": "Martínez", "dni": "1107890123", "email": "ana.martinez@example.com", "phone": "0994567890", "status": "active"},
-  {"external_id": "part-005-uuid", "firstName": "Pedro", "lastName": "Sánchez", "dni": "1108901234", "email": "pedro.sanchez@example.com", "phone": "0995678901", "status": "inactive"}
+  {
+    "external_id": "part-001-uuid",
+    "firstName": "Juan",
+    "lastName": "García",
+    "dni": "1104567890",
+    "email": "juan.garcia@example.com",
+    "phone": "0991234567",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "FUNCIONAL"
+  },
+  {
+    "external_id": "part-002-uuid",
+    "firstName": "María",
+    "lastName": "López",
+    "dni": "1105678901",
+    "email": "maria.lopez@example.com",
+    "phone": "0992345678",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "FUNCIONAL"
+  },
+  {
+    "external_id": "part-003-uuid",
+    "firstName": "Carlos",
+    "lastName": "Rodríguez",
+    "dni": "1106789012",
+    "email": "carlos.rodriguez@example.com",
+    "phone": "0993456789",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "FUNCIONAL"
+  },
+  {
+    "external_id": "part-004-uuid",
+    "firstName": "Ana",
+    "lastName": "Martínez",
+    "dni": "1107890123",
+    "email": "ana.martinez@example.com",
+    "phone": "0994567890",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "FUNCIONAL"
+  },
+  {
+    "external_id": "part-005-uuid",
+    "firstName": "Pedro",
+    "lastName": "Sánchez",
+    "dni": "1108901234",
+    "email": "pedro.sanchez@example.com",
+    "phone": "0995678901",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "FUNCIONAL"
+  },
+  {
+    "external_id": "part-006-uuid",
+    "firstName": "Lucía",
+    "lastName": "Fernández",
+    "dni": "1109012345",
+    "email": "lucia.fernandez@example.com",
+    "phone": "0996789012",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "FUNCIONAL"
+  },
+  {
+    "external_id": "part-007-uuid",
+    "firstName": "Diego",
+    "lastName": "Torres",
+    "dni": "1110123456",
+    "email": "diego.torres@example.com",
+    "phone": "0997890123",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "FUNCIONAL"
+  },
+  {
+    "external_id": "part-008-uuid",
+    "firstName": "Sofía",
+    "lastName": "Ramírez",
+    "dni": "1111234567",
+    "email": "sofia.ramirez@example.com",
+    "phone": "0998901234",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "FUNCIONAL"
+  },
+  {
+    "external_id": "part-ini-001-uuid",
+    "firstName": "Pedrito",
+    "lastName": "González",
+    "dni": "1100000001",
+    "email": "",
+    "phone": "",
+    "age": 8,
+    "status": "active",
+    "program": "INICIACION",
+    "type": "INICIACION",
+    "responsible": {
+      "name": "María González",
+      "dni": "1100000002",
+      "phone": "0991234567",
+      "relationship": "MADRE"
+    }
+  },
+  {
+    "external_id": "part-ini-002-uuid",
+    "firstName": "Kevin",
+    "lastName": "Niño",
+    "dni": "1105000002",
+    "email": "",
+    "phone": "",
+    "age": 10,
+    "status": "active",
+    "program": "INICIACION",
+    "type": "INICIACION",
+    "responsible": {
+      "name": "Padre de Kevin",
+      "dni": "1105000099",
+      "phone": "0999999999",
+      "relationship": "PADRE"
+    }
+  },
+  {
+    "external_id": "part-ini-003-uuid",
+    "firstName": "Valentina",
+    "lastName": "Morales",
+    "dni": "1106000003",
+    "email": "",
+    "phone": "",
+    "age": 9,
+    "status": "active",
+    "program": "INICIACION",
+    "type": "INICIACION",
+    "responsible": {
+      "name": "Andrea Morales",
+      "dni": "1106000099",
+      "phone": "0997654321",
+      "relationship": "MADRE"
+    }
+  },
+  {
+    "external_id": "part-ini-004-uuid",
+    "firstName": "Mateo",
+    "lastName": "Jiménez",
+    "dni": "1107000004",
+    "email": "",
+    "phone": "",
+    "age": 7,
+    "status": "active",
+    "program": "INICIACION",
+    "type": "INICIACION",
+    "responsible": {
+      "name": "Carlos Jiménez",
+      "dni": "1107000099",
+      "phone": "0998765432",
+      "relationship": "PADRE"
+    }
+  },
+  {
+    "external_id": "f2688cf2-ccaa-4188-a527-af92018c0415",
+    "firstName": "Elias",
+    "lastName": "Pomadilla",
+    "dni": "11056207123",
+    "email": "11056207123@participante.local",
+    "phone": "0963632122",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "ESTUDIANTE"
+  },
+  {
+    "external_id": "33517b5a-7a54-48a2-a7d9-69201e70f340",
+    "firstName": "Juanito",
+    "lastName": "Pereiraaa",
+    "dni": "1150464233",
+    "email": "1150464233@participante.local",
+    "phone": "0963632126",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "DOCENTE"
+  },
+  {
+    "external_id": "a17dd442-d7c0-449d-94b6-a9792e7a0254",
+    "firstName": "Darwin",
+    "lastName": "Granda",
+    "dni": "1102075332",
+    "email": "1102075332@participante.local",
+    "phone": "0963632127",
+    "status": "active",
+    "program": "FUNCIONAL",
+    "type": "ESTUDIANTE"
+  },
+  {
+    "external_id": "982317ee-a73e-4fa7-9952-21dcac983458",
+    "firstName": "Darwin",
+    "lastName": "Sarango",
+    "dni": "1150474920",
+    "email": "1150474920@participante.local",
+    "phone": "0963632127",
+    "status": "active",
+    "type": "ESTUDIANTE",
+    "program": "FUNCIONAL"
+  },
+  {
+    "external_id": "daf2c354-7c76-4e21-9cc8-bba62f644368",
+    "firstName": "Elias",
+    "lastName": "Pomada",
+    "dni": "1102075313",
+    "email": "1102075313@participante.local",
+    "phone": "0963632122",
+    "status": "active",
+    "type": "ESTUDIANTE",
+    "program": "FUNCIONAL"
+  }
 ]

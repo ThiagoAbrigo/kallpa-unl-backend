@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.controllers.assessment_controller import AssessmentController
+from app.models.activityLog import ActivityLog
 
 assessment_bp = Blueprint("assessment", __name__)
 controller = AssessmentController()
@@ -36,17 +37,31 @@ def search_evaluation(participant_external_id):
     )
 
 
-@assessment_bp.route("/assessments/history", methods=["GET"])
-def anthropometric_history_general():
-    months_param = request.args.get("months", default=3, type=int)
+@assessment_bp.route("/bmi-distribution", methods=["GET"])
+def bmi_distribution():
+    return response_handler(controller.get_bmi_distribution())
 
-    if months_param not in [3, 6]:
-        months_param = 3
-
-    return response_handler(
-        controller.get_anthropometric_history(months_param)
+@assessment_bp.route("/activities/recent", methods=["GET"])
+def recent_activities():
+    activities = (
+        ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(5).all()
     )
 
-@assessment_bp.route("/average-bmi", methods=["GET"])
-def average_bmi():
-    return response_handler(controller.get_average_bmi())
+    return (
+        jsonify(
+            {
+                "status": "ok",
+                "data": [
+                    {
+                        "id": a.id,
+                        "type": a.type,
+                        "title": a.title,
+                        "description": a.description,
+                        "created_at": a.created_at.isoformat(),
+                    }
+                    for a in activities
+                ],
+            }
+        ),
+        200,
+    )

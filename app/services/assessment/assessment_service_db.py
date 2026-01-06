@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
 from app.models.participant import Participant
 from app.models.assessment import Assessment
+from app.services.activity_service import log_activity
 from app.utils.responses import success_response, error_response
+from sqlalchemy import func
 from app import db
+
 
 class AssessmentServiceDB:
     def classify_bmi_adult(self, bmi):
@@ -85,7 +88,9 @@ class AssessmentServiceDB:
                 }
 
             # Buscar participante
-            participant = Participant.query.filter_by(external_id=participant_external_id).first()
+            participant = Participant.query.filter_by(
+                external_id=participant_external_id
+            ).first()
             if not participant:
                 return {
                     "code": 400,
@@ -117,8 +122,13 @@ class AssessmentServiceDB:
             )
 
             db.session.add(assessment)
-            db.session.commit()
 
+            log_activity(
+                type="MEDICIOOON",
+                title="Medición registrada",
+                description=f"Se registró una evaluación para {participant.firstName} {participant.lastName}",
+            )
+            db.session.commit()
             return {
                 "code": 200,
                 "status": "ok",
@@ -218,86 +228,32 @@ class AssessmentServiceDB:
         except Exception as e:
             return error_response(msg=str(e), code=500)
 
-    def get_average_bmi(self):
+    def get_bmi_distribution_chart(self):
         try:
-            # Obtener todos los IMC registrados
-            all_bmis = db.session.query(Assessment.bmi).all()
+            results = (
+                db.session.query(Assessment.status, func.count(Assessment.id))
+                .group_by(Assessment.status)
+                .all()
+            )
 
-            if not all_bmis:
-                return {
-                    "code": 200,
-                    "status": "ok",
-                    "msg": "No hay evaluaciones registradas",
-                    "data": {"average_bmi": None},
-                }
+            labels = ["Bajo peso", "Peso adecuado", "Sobrepeso", "Obesidad"]
 
-            # Calcular promedio
-            total_bmi = sum(bmi for (bmi,) in all_bmis)
-            count = len(all_bmis)
-            average_bmi = total_bmi / count
+            data_map = {label: 0 for label in labels}
+
+            for status, count in results:
+                if status in data_map:
+                    data_map[status] = count
+
+            chart_data = [
+                {"label": label, "value": data_map[label]} for label in labels
+            ]
 
             return {
                 "code": 200,
                 "status": "ok",
-                "msg": "Promedio de IMC calculado correctamente",
-                "data": {"average_bmi": round(average_bmi, 2)},
+                "msg": "Distribución por estado nutricional",
+                "data": chart_data,
             }
+
         except Exception as e:
-            return {
-                "code": 500,
-                "status": "error",
-                "msg": f"Error interno: {str(e)}",
-                "data": None,
-            }
-
-    def get_anthropometric_history(self, months: int = 3):
-        today = datetime.now()
-        start_date = today - timedelta(days=30 * months)
-
-        # Convertimos start_date a string para comparar con Assessment.date
-        start_date_str = start_date.strftime("%Y-%m-%d")
-
-        # Traer todas las evaluaciones desde start_date_str
-        assessments = (
-            Assessment.query
-            .filter(Assessment.date >= start_date_str)
-            .order_by(Assessment.date.asc())
-            .all()
-        )
-
-        if not assessments:
-            return success_response(msg="No hay evaluaciones en este período", data=[])
-
-        # Lista de valores de IMC para cada evaluación
-        bmi_values = [a.bmi for a in assessments]
-
-        # Promedios generales
-        avg_weight = round(sum(a.weight for a in assessments) / len(assessments), 2)
-        avg_height = round(sum(a.height for a in assessments) / len(assessments), 2)
-        avg_bmi = round(sum(bmi_values) / len(bmi_values), 2)
-
-        # Preparar datos individuales por fecha
-        data = [
-            {
-                "date": a.date,  # ya es string
-                "weight": a.weight,
-                "height": a.height,
-                "bmi": a.bmi,
-            }
-            for a in assessments
-        ]
-
-        response_data = {
-            "period_months": months,
-            "average": {
-                "weight": avg_weight,
-                "height": avg_height,
-                "bmi": avg_bmi,
-            },
-            "assessments": data,
-        }
-
-        return success_response(
-            msg=f"Historial antropométrico últimos {months} meses",
-            data=response_data
-        )
+            return {"code": 500, "status": "error", "msg": str(e), "data": None}

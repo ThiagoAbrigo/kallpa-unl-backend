@@ -32,24 +32,39 @@ def apply_test():
     return response_handler(controller.apply_test(data))
 
 
+# @evaluation_bp.route("/history", methods=["GET"])
+# def history():
+#     participant_external_id = request.args.get("participant_external_id")
+#     test_external_id = request.args.get("test_external_id")
+
+#     try:
+#         months = int(request.args.get("months", 6))
+#     except (ValueError, TypeError):
+#         months = 6
+
+#     return response_handler(
+#         controller.history(
+#             participant_external_id=participant_external_id,
+#             test_external_id=test_external_id,
+#             months=months,
+#         )
+#     )
+
 @evaluation_bp.route("/history", methods=["GET"])
 def history():
     participant_external_id = request.args.get("participant_external_id")
     test_external_id = request.args.get("test_external_id")
-
-    try:
-        months = int(request.args.get("months", 6))
-    except (ValueError, TypeError):
-        months = 6
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
 
     return response_handler(
         controller.history(
             participant_external_id=participant_external_id,
             test_external_id=test_external_id,
-            months=months,
+            start_date=start_date,
+            end_date=end_date,
         )
     )
-
 
 
 @evaluation_bp.route("/list-tests-participant", methods=["GET"])

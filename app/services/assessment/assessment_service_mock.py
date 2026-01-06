@@ -113,3 +113,31 @@ class AssessmentServiceMock:
                 msg=f"Internal error MOCK: {str(e)}",
                 code=500
             )
+
+    def get_average_bmi(self):
+        try:
+            assessments = self._load()
+            if not assessments:
+                return success_response(msg="No hay datos", data=0)
+            
+            total_bmi = sum([a.get("bmi", 0) for a in assessments])
+            average = round(total_bmi / len(assessments), 2)
+            
+            return success_response(
+                msg="Promedio BMI calculado (MOCK)",
+                data=average
+            )
+        except Exception as e:
+            return error_response(f"Error interno MOCK: {str(e)}")
+
+    def get_anthropometric_history(self, months=6):
+        try:
+            assessments = self._load()
+            # En una implementación real agruparíamos por mes
+            # Para el mock devolvemos la lista completa
+            return success_response(
+                msg="Historial antropométrico (MOCK)",
+                data=assessments
+            )
+        except Exception as e:
+            return error_response(f"Error interno MOCK: {str(e)}")

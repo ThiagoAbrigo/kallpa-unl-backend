@@ -13,6 +13,7 @@ class UserServiceMock:
         base = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         print("BASE:", base)
         self.mock_path = os.path.join(base, "mock", "users.json")
+        self.participants_path = os.path.join(base, "mock", "participants.json")
         print("MOCK PATH:", self.mock_path)
 
     def _get_token(self):
@@ -38,10 +39,8 @@ class UserServiceMock:
     def get_participants_only(self):
         """Obtiene solo los participantes (excluye docentes, administrativos, pasantes)."""
         users = self._load()
-        # Tipos que NO son participantes (son staff/profesores)
         staff_types = ["DOCENTE", "ADMINISTRATIVO", "PASANTE", "PROFESOR", "ADMIN"]
         
-        # Filtrar solo participantes activos
         participants = [
             u for u in users 
             if u.get("type", "").upper() not in staff_types 
@@ -56,8 +55,6 @@ class UserServiceMock:
     def get_pasantes(self):
         """Obtiene solo los pasantes."""
         users = self._load()
-        
-        # Filtrar solo pasantes
         pasantes = [
             u for u in users 
             if u.get("type", "").upper() == "PASANTE"
@@ -72,6 +69,13 @@ class UserServiceMock:
         """Crea usuario localmente y lo sincroniza con el microservicio Java."""
         token = self._get_token()
         users = self._load()
+        
+        users = self._load()
+        
+        required_fields = ["firstName", "lastName", "dni"]
+        for field in required_fields:
+            if not data.get(field):
+                return error_response(msg=f"Campo requerido: {field}", code=400)
 
         dni = data.get("dni")
         if dni and token:
@@ -81,6 +85,12 @@ class UserServiceMock:
                     msg="Usuario ya existe en el sistema central",
                     code=400
                 )
+
+
+        if dni:
+             for u in users:
+                 if u.get("dni") == dni:
+                     return error_response(msg="Error: La cédula ya se encuentra registrada", code=400)
 
         new_id = max([u.get("id", 0) for u in users], default=0) + 1
 
@@ -145,9 +155,11 @@ class UserServiceMock:
                 )
 
         new_id = max([u.get("id", 0) for u in users], default=0) + 1
+        external_id = str(uuid.uuid4())
 
         new_participant = {
             "id": new_id,
+            "external_id": external_id,
             "firstName": datos_nino.get("firstName"),
             "lastName": datos_nino.get("lastName"),
             "age": datos_nino.get("age"),
@@ -157,6 +169,9 @@ class UserServiceMock:
             "address": datos_nino.get("address", ""),
             "status": "ACTIVO",
             "type": "INICIACION",
+            "program": "INICIACION",
+            "program_name": "Iniciación",
+            "program_id": 2,
             "responsible": {
                 "name": datos_padre.get("name"),
                 "dni": datos_padre.get("dni"),
@@ -185,6 +200,8 @@ class UserServiceMock:
 
         users.append(new_participant)
         self._save(users)
+
+        self._sync_to_participants(new_participant)
 
         return success_response(
             msg="Participante de iniciación y responsable registrados correctamente (MOCK)" + (" y sincronizado con Java" if new_participant.get("java_synced") else ""),
@@ -259,3 +276,132 @@ class UserServiceMock:
             )
 
         return error_response(msg="Participante no encontrado en Java", code=404)
+
+    def get_interns(self):
+        """Obtiene solo los pasantes (alias de get_pasantes)."""
+        return self.get_pasantes()
+
+    def create_participant(self, data):
+        """
+        Registra un participante (mayor o menor de edad).
+        Si es menor (type=INICIACION), espera datos del responsable.
+        """
+        token = self._get_token()
+        users = self._load()
+
+        participant_type = data.get("type", "ESTUDIANTE").upper()
+        program = data.get("program", "FUNCIONAL").upper()
+
+        valid_programs = ["INICIACION", "FUNCIONAL"]
+        if program not in valid_programs:
+            program = "FUNCIONAL"
+
+        if participant_type == "INICIACION":
+            return self.create_initiation_participant(data)
+
+        required_fields = ["firstName", "lastName", "dni"]
+        for field in required_fields:
+            if not data.get(field):
+                return error_response(msg=f"Campo requerido: {field}", code=400)
+
+        dni = data.get("dni")
+
+        if dni and token:
+            java_search = java_sync.search_by_identification(dni, token)
+            if java_search.get("found"):
+                return error_response(
+                    msg="Participante ya existe en el sistema central",
+                    code=400
+                )
+
+        if dni:
+            for u in users:
+                if u.get("dni") == dni:
+                    return error_response(msg="Error: La cédula ya se encuentra registrada", code=400)
+
+        new_id = max([u.get("id", 0) for u in users], default=0) + 1
+        external_id = str(uuid.uuid4())
+
+        # program_name/id removed as they are redundant with 'program'
+        # program_name = "Iniciación" if program == "INICIACION" else "Funcional"
+        # program_id = 2 if program == "INICIACION" else 1
+
+        new_participant = {
+            "id": new_id,
+            "external_id": external_id,
+            "firstName": data.get("firstName"),
+            "lastName": data.get("lastName"),
+            "age": data.get("age"),
+            "dni": dni,
+            "phone": data.get("phone", ""),
+            "email": data.get("email", ""),
+            "address": data.get("address", ""),
+            "status": "ACTIVO",
+            "type": participant_type,
+            "program": program,
+            "type": participant_type,
+            "program": program,
+        }
+
+        if token:
+            email = data.get("email") or f"{dni}@participante.local"
+            password = data.get("password") or str(uuid.uuid4())[:8]
+
+            java_data = {
+                "firstName": data.get("firstName"),
+                "lastName": data.get("lastName"),
+                "dni": dni,
+                "phone": data.get("phone", ""),
+                "address": data.get("address", ""),
+                "type": participant_type,
+                "email": email,
+                "password": password
+            }
+
+            java_result = java_sync.create_person_with_account(java_data, token)
+            if java_result and java_result.get("success"):
+                new_participant["java_synced"] = True
+                new_participant["java_external"] = java_result.get("data", {}).get("external")
+            else:
+                new_participant["java_synced"] = False
+                print(f"[UserServiceMock] No se pudo sincronizar con Java: {java_result}")
+
+        users.append(new_participant)
+        self._save(users)
+
+        self._sync_to_participants(new_participant)
+
+        return success_response(
+            msg="Participante registrado exitosamente (MOCK)" + (" y sincronizado con Java" if new_participant.get("java_synced") else ""),
+            data=new_participant,
+            code=201
+        )
+
+    def _sync_to_participants(self, participant_data):
+        """Sincroniza el participante con el archivo participants.json para asistencia."""
+        try:
+            with open(self.participants_path, "r", encoding="utf-8") as f:
+                participants = json.load(f)
+        except Exception:
+            participants = []
+
+        attendance_participant = {
+            "external_id": participant_data.get("external_id"),
+            "firstName": participant_data.get("firstName"),
+            "lastName": participant_data.get("lastName"),
+            "dni": participant_data.get("dni"),
+            "email": participant_data.get("email", ""),
+            "phone": participant_data.get("phone", ""),
+            "status": "active",
+            "status": "active",
+            "type": participant_data.get("type", "FUNCIONAL"),
+            "program": participant_data.get("program", "FUNCIONAL"),
+        }
+
+        if participant_data.get("responsible"):
+            attendance_participant["responsible"] = participant_data["responsible"]
+
+        participants.append(attendance_participant)
+
+        with open(self.participants_path, "w", encoding="utf-8") as f:
+            json.dump(participants, f, indent=2, ensure_ascii=False)
