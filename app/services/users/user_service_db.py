@@ -65,7 +65,7 @@ class UserServiceDB:
         except Exception as e:
             return error_response(f"Error obteniendo pasantes: {str(e)}", code=500)
 
-    def create_user(self, data):
+    # def create_user(self, data):
         """Crea usuario en PostgreSQL y lo sincroniza con el microservicio Java."""
         token = self._get_token()
 
@@ -327,7 +327,9 @@ class UserServiceDB:
             responsible_data = data.get("responsible") if is_minor else None
 
             # 1. Validaciones
-            self._validate_participant(participant_data, responsible_data, is_minor)
+            validation_result = self._validate_participant(participant_data, responsible_data, is_minor)
+            if validation_result:
+                return validation_result
 
             # Validate program (Phase 3 requirement)
             valid_programs = ["INICIACION", "FUNCIONAL"]
@@ -374,11 +376,51 @@ class UserServiceDB:
             return error_response(str(e), 500)
 
     def _validate_participant(self, participant, responsible, is_minor):
-        if not participant:
-            raise Exception("Datos del participante incompletos")
+        errors = {}
+        required_fields = ["firstName", "lastName", "dni", "age", "phone", "program", "email", "type"]
+        for field in required_fields:
+            if not participant.get(field):
+                errors[field] = "Campo requerido"
 
-        if is_minor and not responsible:
-            raise Exception("Se requieren datos del responsable")
+        dni = participant.get("dni")
+        if dni:
+            dni_str = str(dni)
+            if len(dni_str) < 9 or len(dni_str) > 10:
+                errors["dni"] = "DNI inválido (debe tener entre 9 y 10 dígitos)"
+            elif Participant.query.filter_by(dni=dni).first():
+                errors["dni"] = "El DNI ya está registrado"
+        email = participant.get("email")
+        if email and Participant.query.filter_by(email=email).first():
+            errors["email"] = "El correo ya está registrado"
+
+        if is_minor:
+            if not responsible:
+                errors["responsibleName"] = "Campo requerido"
+                errors["responsibleDni"] = "Campo requerido"
+                errors["responsiblePhone"] = "Campo requerido"
+            else:
+                responsible_required = ["name", "dni", "phone"]
+                for field in responsible_required:
+                    key = "responsible" + field.capitalize()
+                    if not responsible.get(field):
+                        errors[key] = "Campo requerido"
+
+                responsible_dni = responsible.get("dni")
+                if responsible_dni:
+                    dni_str = str(responsible_dni)
+                    if len(dni_str) < 9 or len(dni_str) > 10:
+                        errors["responsibleDni"] = (
+                            "DNI inválido (debe tener entre 9 y 10 dígitos)"
+                        )
+                    elif Responsible.query.filter_by(dni=responsible_dni).first():
+                        errors["responsibleDni"] = (
+                            "El DNI del responsable ya está registrado"
+                        )
+
+        if errors:
+            return error_response("Errores de validación", data=errors)
+
+        return None
 
     def _build_participant(self, data, is_minor, program=None):
         return Participant(

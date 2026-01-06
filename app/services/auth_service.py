@@ -13,7 +13,7 @@ class AuthService:
         password = data.get("password")
 
         if not email or not password:
-            return error_response("Email y contraseña requeridos", 400)
+            return error_response("Ingrese correo y contraseña", 400)
 
         user = User.query.filter_by(email=email, status="ACTIVO").first()
 
@@ -57,13 +57,12 @@ class AuthService:
                 },
                 "code": 200,
             }
-
         if email == "dev@kallpa.com" or (email == "admin@kallpa.com" and password == "123456"):
             token = generate_token(
                 {
                     "sub": "usuario-mock-bypass",
                     "email": email,
-                    "role": "admin",
+                    "role": "ADMINISTRADOR",
                 }
             )
 
@@ -74,7 +73,7 @@ class AuthService:
                 "user": {
                     "external_id": "usuario-mock-bypass",
                     "email": email,
-                    "role": "admin",
+                    "role": "ADMINISTRADOR",
                 },
                 "code": 200,
             }
@@ -142,4 +141,4 @@ class AuthService:
         except Exception:
             return error_response("No se pudo conectar al sistema externo", 500)
 
-        return error_response("Credenciales inválidas", 401)
+        return error_response("Credenciales inválidas", 400)
