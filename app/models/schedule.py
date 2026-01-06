@@ -22,6 +22,7 @@ class Schedule(db.Model):
     isRecurring = db.Column(db.Boolean, default=True)
     location = db.Column(db.String(200), nullable=True)
     description = db.Column(db.String(500), nullable=True)
+    status = db.Column(db.String(20), default="active")
 
     def __repr__(self):
         return f"<Schedule {self.name}>"

@@ -280,7 +280,7 @@ class AttendanceServiceDB:
     def get_schedules(self):
         """Obtener todos los horarios"""
         try:
-            schedules = Schedule.query.all()
+            schedules = Schedule.query.filter_by(status="active").all()
             result = []
             for s in schedules:
                 result.append({
@@ -374,10 +374,9 @@ class AttendanceServiceDB:
             schedule = Schedule.query.filter_by(external_id=schedule_id).first()
             if not schedule:
                 return error_response("Horario no encontrado", code=404)
-
-            db.session.delete(schedule)
+            schedule.status = "inactive"
             db.session.commit()
-            return success_response(msg="Horario eliminado correctamente")
+            return success_response(msg="Horario eliminado correctamente (Soft Delete)")
         except Exception as e:
             db.session.rollback()
             return error_response(f"Error eliminando horario: {str(e)}")
@@ -388,7 +387,7 @@ class AttendanceServiceDB:
             dias_semana = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
             hoy = dias_semana[datetime.now().weekday()]
 
-            schedules = Schedule.query.filter_by(dayOfWeek=hoy).all()
+            schedules = Schedule.query.filter_by(dayOfWeek=hoy, status="active").all()
             result = []
             for s in schedules:
                 result.append({
