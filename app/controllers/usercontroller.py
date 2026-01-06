@@ -1,48 +1,588 @@
-from app.services import user_service
-
+from app.models.participant import Participant
+from app.models.responsible import Responsible
+from app.models.user import User
+from app.services.java_sync_service import java_sync
+from app.utils.responses import error_response, success_response
+from flask import request
+from app import db
+from werkzeug.security import generate_password_hash
+import uuid
 
 class UserController:
+    def _get_token(self):
+        """Obtiene el token del header Authorization."""
+        auth_header = request.headers.get("Authorization", "")
+        return auth_header
 
     def get_users(self):
-        return user_service.get_all_users()
+        try:
+            participants = Participant.query.all()
 
-    def get_participants_only(self):
-        """Obtiene solo participantes (sin docentes, administrativos, etc.)"""
-        return user_service.get_participants_only()
+            data = [
+                {
+                    "external_id": p.external_id,
+                    "firstName": p.firstName,
+                    "lastName": p.lastName,
+                    "email": p.email,
+                    "dni": p.dni,
+                    "age": p.age,
+                    "status": p.status,
+                    "type": p.type,
+                    "java_external": p.java_external,
+                }
+                for p in participants
+            ]
 
-    def get_interns(self):
-        """Obtiene solo pasantes"""
-        return user_service.get_interns()
-
-    def get_pasantes(self):
-        """Obtiene solo pasantes (alias)"""
-        return user_service.get_pasantes()
+            return success_response(msg="Usuarios listados correctamente", data=data)
+        except Exception:
+            return error_response("Error interno del servidor", code=500)
 
     def create_user(self, data):
-        return user_service.create_user(data)
+        try:
+            # ---------- Validación general ----------
+            if not data or not isinstance(data, dict):
+                return error_response("Datos inválidos", 400)
 
-    def create_initiation(self, data):
-        return user_service.create_initiation_participant(data)
+            # ---------- Campos obligatorios ----------
+            required_fields = [
+                "firstName",
+                "lastName",
+                "dni",
+                "email",
+                "password",
+                "role",
+            ]
 
-    def update_status(self, external_id, data):
-        nuevo_estado = data.get('estado')
-        if not nuevo_estado:
-            return {"status": "error", "msg": "Falta el campo 'estado'"}, 400
-        return user_service.change_status(external_id, nuevo_estado)
+            missing_fields = {}
+            for field in required_fields:
+                if field not in data or not str(data[field]).strip():
+                    missing_fields[field] = "Campo requerido"
 
-    def search_user(self, dni):
-        return user_service.search_by_dni(dni)
+            if missing_fields:
+                return error_response(
+                    "Campo requerido",
+                    code=400,
+                    data=missing_fields,  # <-- Aquí devuelves el campo con el mensaje
+                )
+
+            # ---------- Validar DNI ----------
+            dni = str(data["dni"]).strip()
+            if not dni.isdigit() or len(dni) != 10:
+                return error_response(
+                    "Cédula inválida. Debe tener exactamente 10 dígitos",
+                    400,
+                    data={"dni": "Cédula inválida"},
+                )
+
+            # ---------- Validar rol ----------
+            allowed_roles = ["DOCENTE", "PASANTE", "ADMINISTRADOR"]
+            if data["role"] not in allowed_roles:
+                return error_response(
+                    "Rol inválido", 400, data={"role": "Rol inválido"}
+                )
+
+            # ---------- Validar duplicados ----------
+            if User.query.filter_by(dni=dni).first():
+                return error_response(
+                    "El DNI ya está registrado", 400, data={"dni": "DNI duplicado"}
+                )
+
+            if User.query.filter_by(email=data["email"].lower().strip()).first():
+                return error_response(
+                    "El correo ya está registrado",
+                    400,
+                    data={"email": "Correo duplicado"},
+                )
+
+            # ---------- Hashear contraseña ----------
+            hashed_password = generate_password_hash(
+                data["password"], method="pbkdf2:sha256", salt_length=16
+            )
+
+            # ---------- Valores por defecto ----------
+            phone = data.get("phone")
+            address = data.get("address")
+            phone = phone.strip() if phone and str(phone).strip() else "NINGUNA"
+            address = address.strip() if address and str(address).strip() else "NINGUNA"
+
+            # ---------- Crear usuario ----------
+            user = User(
+                firstName=data["firstName"].strip(),
+                lastName=data["lastName"].strip(),
+                dni=dni,
+                phone=phone,
+                address=address,
+                email=data["email"].lower().strip(),
+                password=hashed_password,
+                role=data["role"],
+                status="ACTIVO",
+            )
+
+            db.session.add(user)
+            db.session.commit()
+
+            # ---------- Sincronizar con Java ----------
+            token = self._get_token()
+            java_synced = False
+            if token:
+                java_data = {
+                    "firstName": user.firstName,
+                    "lastName": user.lastName,
+                    "dni": user.dni,
+                    "phone": user.phone,
+                    "address": user.address,
+                    "type": user.role,
+                    "email": user.email,
+                    "password": data["password"],  # sin hashear
+                }
+
+                java_result = java_sync.create_person_with_account(java_data, token)
+                if java_result and java_result.get("success"):
+                    user.java_external = java_result.get("data", {}).get("external")
+                    db.session.commit()
+                    java_synced = True
+                else:
+                    print(
+                        f"[UserService] ⚠️ No se pudo sincronizar con Java: {java_result}"
+                    )
+
+            return success_response(
+                "Usuario registrado correctamente",
+                data={
+                    "external_id": user.external_id,
+                    "role": user.role,
+                    "java_synced": java_synced,
+                },
+                code=200,
+            )
+
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f"Error interno del servidor: {str(e)}", 500)
+
+    def change_status(self, external_id, new_state):
+        """RF010: Cambiar estado (Activar/Inactivar) y sincroniza con Java."""
+        token = self._get_token()
+
+        try:
+            # Validar que el estado sea válido
+            if new_state not in ["ACTIVO", "INACTIVO"]:
+                return error_response(
+                    msg="Estado inválido. Use ACTIVO o INACTIVO",
+                )
+
+            participant = Participant.query.filter_by(external_id=external_id).first()
+
+            if not participant:
+                return error_response(
+                    msg="Participant not found",
+                )
+
+            participant.status = new_state
+            db.session.commit()
+
+            java_external = participant.java_external
+            if token and java_external:
+                java_result = java_sync.change_state(java_external, token)
+                if java_result and java_result.get("success"):
+                    print(
+                        f"[UserServiceDB] Estado sincronizado con Java para {java_external}"
+                    )
+                else:
+                    print(
+                        f"[UserServiceDB] No se pudo sincronizar estado con Java: {java_result}"
+                    )
+
+            return success_response(
+                msg=f"Status updated to {new_state}",
+                data={"external_id": participant.external_id},
+            )
+
+        except Exception:
+            db.session.rollback()
+            return error_response(
+                msg="Error interno del servidor al cambiar el estado", code=500
+            )
 
     def search_in_java(self, dni):
-        """Busca exclusivamente en el microservicio Java."""
-        return user_service.search_in_java(dni)
+        token = self._get_token()
+
+        if not token:
+            return error_response(msg="Token requerido para buscar en Java", code=401)
+
+        java_result = java_sync.search_by_identification(dni, token)
+        if java_result.get("found"):
+            return success_response(
+                msg="Participante encontrado en Java", data=java_result.get("data")
+            )
+
+        return error_response(msg="Participante no encontrado en Java", code=404)
 
     def create_participant(self, data):
+        token = self._get_token()
+
+        try:
+            is_minor = data.get("type") == "INICIACION" or data.get("age", 0) < 18
+
+            participant_data = data.get("participant") if is_minor else data
+            responsible_data = data.get("responsible") if is_minor else None
+
+            # 1. Validaciones
+            validation_result = self._validate_participant(
+                participant_data, responsible_data, is_minor
+            )
+            if validation_result:
+                return validation_result
+
+            # Validate program (Phase 3 requirement)
+            valid_programs = ["INICIACION", "FUNCIONAL"]
+            program = participant_data.get("program")
+            if program and program not in valid_programs:
+                return error_response(f"Programa inválido. Use: {valid_programs}")
+
+            # 2. Verificar en Java
+            self._check_java_duplicate(participant_data, token)
+
+            # 3. Crear participante
+            participant = self._build_participant(participant_data, is_minor, program)
+            db.session.add(participant)
+
+            # # 4. Sincronizar Java
+            # self._sync_with_java(participant, participant_data, token, is_minor)
+
+            # db.session.add(participant)
+            # db.session.flush()
+
+            # 5. Responsable (solo iniciación)
+            responsible = None
+            if is_minor:
+                responsible = self._create_responsible(responsible_data, participant)
+
+            db.session.commit()
+            try:
+                self._sync_with_java(participant, participant_data, token, is_minor)
+            except Exception as e:
+                print(f"[Warning] Error sincronizando con Java: {e}")
+
+            return success_response(
+                msg="Participante registrado correctamente",
+                data={
+                    "participant_external_id": participant.external_id,
+                    "responsible_external_id": (
+                        responsible.external_id if responsible else None
+                    ),
+                },
+            )
+
+        except Exception as e:
+            db.session.rollback()
+            return error_response(str(e), 500)
+
+    def _validate_participant(self, participant, responsible, is_minor):
+        errors = {}
+        required_fields = [
+            "firstName",
+            "lastName",
+            "dni",
+            "age",
+            "phone",
+            "program",
+            "email",
+            "type",
+        ]
+        for field in required_fields:
+            if not participant.get(field):
+                errors[field] = "Campo requerido"
+
+        dni = participant.get("dni")
+        if dni:
+            dni_str = str(dni)
+            if len(dni_str) < 9 or len(dni_str) > 10:
+                errors["dni"] = "DNI inválido (debe tener entre 9 y 10 dígitos)"
+            elif Participant.query.filter_by(dni=dni).first():
+                errors["dni"] = "El DNI ya está registrado"
+        email = participant.get("email")
+        if email and Participant.query.filter_by(email=email).first():
+            errors["email"] = "El correo ya está registrado"
+
+        if is_minor:
+            if not responsible:
+                errors["responsibleName"] = "Campo requerido"
+                errors["responsibleDni"] = "Campo requerido"
+                errors["responsiblePhone"] = "Campo requerido"
+            else:
+                responsible_required = ["name", "dni", "phone"]
+                for field in responsible_required:
+                    key = "responsible" + field.capitalize()
+                    if not responsible.get(field):
+                        errors[key] = "Campo requerido"
+
+                responsible_dni = responsible.get("dni")
+                if responsible_dni:
+                    dni_str = str(responsible_dni)
+                    if len(dni_str) < 9 or len(dni_str) > 10:
+                        errors["responsibleDni"] = (
+                            "DNI inválido (debe tener entre 9 y 10 dígitos)"
+                        )
+                    elif Responsible.query.filter_by(dni=responsible_dni).first():
+                        errors["responsibleDni"] = (
+                            "El DNI del responsable ya está registrado"
+                        )
+
+        if errors:
+            return error_response("Errores de validación", data=errors)
+
+        return None
+
+    def _build_participant(self, data, is_minor, program=None):
+        return Participant(
+            firstName=data.get("firstName"),
+            lastName=data.get("lastName"),
+            age=data.get("age"),
+            dni=data.get("dni"),
+            phone=data.get("phone"),
+            email=data.get("email") or None,
+            address=data.get("address"),
+            status="ACTIVO",
+            type="INICIACION" if is_minor else data.get("type", "EXTERNO"),
+            program=program,
+        )
+
+    def _create_responsible(self, data, participant):
+        responsible = Responsible(
+            name=data.get("name"),
+            dni=data.get("dni"),
+            phone=data.get("phone"),
+            participant_id=participant.id,
+        )
+        db.session.add(responsible)
+        return responsible
+
+    def _check_java_duplicate(self, participant_data, token):
+        if not token:
+            return
+
+        dni = participant_data.get("dni")
+        if not dni:
+            return
+
+        java_search = java_sync.search_by_identification(dni, token)
+        if java_search.get("found"):
+            raise Exception("Participante ya existe en el sistema central")
+
+    def _sync_with_java(self, participant, participant_data, token, is_minor):
+        if not token:
+            return
+
+        email = participant_data.get("email")
+        password = participant_data.get("password")
+
+        if not email:
+            email = f"{participant_data.get('dni')}@kallpa.system"
+
+        if not password:
+            password = str(uuid.uuid4())[:8]
+
+        java_data = {
+            "firstName": participant_data.get("firstName"),
+            "lastName": participant_data.get("lastName"),
+            "dni": participant_data.get("dni"),
+            "phone": participant_data.get("phone", ""),
+            "address": participant_data.get("address", ""),
+            "type": (
+                "INICIACION" if is_minor else participant_data.get("type", "EXTERNO")
+            ),
+            "email": email,
+            "password": password,
+        }
+
+        java_result = java_sync.create_person_with_account(java_data, token)
+
+        if java_result and java_result.get("success"):
+            participant.java_external = java_result.get("data", {}).get("external")
+
+    def get_profile(self, external_id):
         """
-        Registra un participante (mayor o menor de edad).
-        Si es menor, espera datos de responsable.
+        Obtiene el perfil completo de un usuario por su external_id.
         """
-        return user_service.create_participant(data)
+        try:
+            db.session.expire_all()
+            user = User.query.filter_by(external_id=external_id).first()
+            if not user:
+                return error_response("Usuario no encontrado", 404)
+
+            return success_response(
+                msg="Perfil obtenido correctamente",
+                data={
+                    "external_id": user.external_id,
+                    "email": user.email,
+                    "firstName": user.firstName,
+                    "lastName": user.lastName,
+                    "dni": user.dni,
+                    "phone": user.phone,
+                    "address": user.address,
+                    "role": user.role,
+                    "status": user.status,
+                },
+            )
+        except Exception as e:
+            print(f"[UserService] Error obteniendo perfil: {str(e)}")
+            return error_response(f"Error obteniendo perfil: {str(e)}")
+
+    def update_profile(self, external_id, data, token_auth):
+        """
+        Actualiza el perfil de un usuario y sincroniza con Java.
+        external_id: ID del usuario logueado (de la BD local)
+        data: JSON con { firstName, lastName, phone, address, ... }
+        token_auth: No se usa - se obtiene token fresco de Java
+        """
+        import requests
+
+        try:
+            print(f"[UserService] Buscando usuario con external_id: {external_id}")
+
+            user = User.query.filter_by(external_id=external_id).first()
+            if not user:
+                print(f"[UserService] Usuario no encontrado")
+                return error_response("Usuario no encontrado", 404)
+
+            print(f"[UserService] Usuario encontrado: {user.firstName} {user.lastName}")
+
+            if "firstName" in data:
+                user.firstName = data["firstName"]
+            if "lastName" in data:
+                user.lastName = data["lastName"]
+            if "phone" in data:
+                user.phone = data["phone"]
+            if "address" in data:
+                user.address = data["address"]
+
+            db.session.commit()
+            print(f"[UserService] Datos actualizados en BD local")
+
+            java_synced = False
+            java_error_msg = None
+
+            try:
+                print(
+                    f"[UserService] Haciendo login a Java para obtener external y token frescos..."
+                )
+
+                java_login_resp = requests.post(
+                    "http://localhost:8096/api/person/login",
+                    json={
+                        "email": user.email,
+                        "password": data.get("password", "12345678"),
+                    },
+                    timeout=5,
+                )
+
+                print(
+                    f"[UserService] Java login response: {java_login_resp.status_code}"
+                )
+
+                if java_login_resp.status_code == 200:
+                    java_data = java_login_resp.json().get("data", {})
+                    java_external = java_data.get("external")
+                    java_token = java_data.get("token")
+
+                    print(f"[UserService] Java external FRESCO: {java_external}")
+                    print(
+                        f"[UserService] Java token FRESCO: {java_token[:30] if java_token else 'None'}..."
+                    )
+
+                    if java_external and java_token:
+                        rol_java = "EXTERNOS"
+                        if user.role == "ESTUDIANTE":
+                            rol_java = "ESTUDIANTES"
+                        elif user.role == "DOCENTE":
+                            rol_java = "DOCENTES"
+                        elif user.role == "ADMINISTRATIVO":
+                            rol_java = "ADMINISTRATIVOS"
+
+                        payload_java = {
+                            "first_name": user.firstName,
+                            "last_name": user.lastName,
+                            "external": java_external,
+                            "type_identification": "CEDULA",
+                            "type_stament": rol_java,
+                            "direction": (
+                                user.address if user.address else "Sin dirección"
+                            ),
+                            "phono": user.phone if user.phone else "0000000000",
+                        }
+
+                        print(f"[UserService] Payload para Java: {payload_java}")
+
+                        java_resp = java_sync.update_person_in_java(
+                            payload_java, java_token
+                        )
+
+                        if java_resp and java_resp.get("status") == "success":
+                            java_synced = True
+                            print(f"[UserService] Sincronizado con Java exitosamente")
+                        else:
+                            java_error_msg = (
+                                java_resp.get("message")
+                                if java_resp
+                                else "Sin respuesta"
+                            )
+                            print(f"[UserService] Java update falló: {java_error_msg}")
+                    else:
+                        java_error_msg = "No se obtuvo external/token de Java"
+                else:
+                    java_error_msg = f"Login Java falló: {java_login_resp.status_code}"
+                    print(f"[UserService] {java_error_msg}")
+
+            except requests.exceptions.RequestException as e:
+                java_error_msg = f"Error conexión Java: {str(e)}"
+                print(f"[UserService] {java_error_msg}")
+
+            response_data = {
+                "external_id": user.external_id,
+                "email": user.email,
+                "firstName": user.firstName,
+                "lastName": user.lastName,
+                "dni": user.dni,
+                "phone": user.phone,
+                "address": user.address,
+                "role": user.role,
+                "status": user.status,
+                "java_synced": java_synced,
+            }
+
+            if java_synced:
+                return success_response(
+                    msg="Perfil actualizado correctamente", data=response_data
+                )
+            else:
+                return success_response(
+                    msg=f"Perfil actualizado localmente. Java: {java_error_msg}",
+                    data=response_data,
+                )
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"[UserService] Error: {str(e)}")
+            return error_response(f"Error actualizando perfil: {str(e)}")
 
     def get_active_participants_count(self):
-        return user_service.get_active_participants_count()
+        """
+        Devuelve el total de participantes activos mayores y menores de edad.
+        """
+        try:
+            total_adult = Participant.query.filter(
+                Participant.age >= 18, Participant.status == "ACTIVO"
+            ).count()
+
+            total_minor = Participant.query.filter(
+                Participant.age < 18, Participant.status == "ACTIVO"
+            ).count()
+
+            return success_response(
+                msg="Totales de participantes activos obtenidos correctamente",
+                data={"adult": total_adult, "minor": total_minor},
+            )
+
+        except Exception as e:
+            return error_response("Error interno del servidor", code=500)
