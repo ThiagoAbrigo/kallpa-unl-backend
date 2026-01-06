@@ -20,10 +20,10 @@ class Config:
     JWT_SECRET_KEY = environ.get("JWT_SECRET_KEY")
 
     # [NUEVO] URL del API externo (Docker del profesor)
-    PERSON_API_URL = "http://localhost:8097/api/person"
+    PERSON_API_URL = "http://localhost:8096/api/person"
 
     #SQLAlchemy configuration
-    SQLALCHEMY_DATABASE_URI = f'postgresql+pg8000://{user}:{password}@{host}:{port}/{db}'
+    SQLALCHEMY_DATABASE_URI = f'postgresql://{user}:{password}@{host}:{port}/{db}?client_encoding=utf8'
     
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_RECORS_QUERIES = True
