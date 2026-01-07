@@ -38,41 +38,62 @@ class EvaluationController:
             return error_response(f"Internal error: {str(e)}", 500)
 
     def register(self, data):
+
         try:
-            if not data or not isinstance(data, dict):
+            if not isinstance(data, dict):
                 return error_response("Datos inválidos")
 
-            if "name" not in data or not data["name"].strip():
+            name = data.get("name", "").strip()
+            if not name:
                 return error_response({"name": "Campo requerido"})
 
-            if Test.query.filter_by(name=data["name"].strip()).first():
+            if Test.query.filter_by(name=name).first():
                 return error_response({"name": "El test con ese nombre ya existe"})
 
-            if "frequency_months" not in data:
+            freq = data.get("frequency_months")
+
+            if freq is None:
+                return error_response({"frequency_months": "Campo requerido"})
+
+            if not isinstance(freq, int):
                 return error_response(
-                    {"frequency_months": "Se requiere la frecuencia en meses"}
+                    {"frequency_months": "La frecuencia debe ser un número entero"}
                 )
 
-            if not data.get("exercises") or len(data["exercises"]) == 0:
+            if freq < 1 or freq > 12:
+                return error_response(
+                    {"frequency_months": "La frecuencia debe estar entre 1 y 12 meses"}
+                )
+
+            exercises = data.get("exercises", [])
+            if not exercises:
                 return error_response(
                     {"exercises": "Se requiere al menos un ejercicio"}
                 )
 
             test = Test(
-                name=data["name"].strip(),
+                name=name,
                 description=data.get("description"),
-                frequency_months=data["frequency_months"],
+                frequency_months=freq,
             )
 
             db.session.add(test)
             db.session.flush()
 
-            for ex in data["exercises"]:
+            for ex in exercises:
+                ex_name = ex.get("name", "").strip()
+                unit = ex.get("unit", "").strip()
+
+                if not ex_name or not unit:
+                    return error_response(
+                        {"exercises": "Complete los campos de los ejercicios"}
+                    )
+
                 db.session.add(
                     TestExercise(
                         test_id=test.id,
-                        name=ex["name"].strip(),
-                        unit=ex["unit"].strip(),
+                        name=ex_name,
+                        unit=unit,
                     )
                 )
 
@@ -85,96 +106,105 @@ class EvaluationController:
 
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Internal error: {str(e)}", 500)
+            return error_response("Error interno del servidor", 500)
 
-    def apply_test(self, data):
-        try:
-            if not data or not isinstance(data, dict):
-                return error_response("Datos inválidos")
 
-            if "participant_external_id" not in data:
-                return error_response("Debe seleccionar un participante")
+def apply_test(self, data):
+    try:
+        if not data or not isinstance(data, dict):
+            return error_response("Datos inválidos")
 
-            if "test_external_id" not in data:
-                return error_response("Debe seleccionar un test")
+        if "participant_external_id" not in data:
+            return error_response("Debe seleccionar un participante")
 
-            participant = Participant.query.filter_by(
-                external_id=data["participant_external_id"]
-            ).first()
+        if "test_external_id" not in data:
+            return error_response("Debe seleccionar un test")
 
-            if not participant:
-                return error_response("Participante no encontrado")
+        participant = Participant.query.filter_by(
+            external_id=data["participant_external_id"]
+        ).first()
 
-            test = Test.query.filter_by(external_id=data["test_external_id"]).first()
+        if not participant:
+            return error_response("Participante no encontrado")
 
-            if not test:
-                return error_response("Test no encontrado")
+        test = Test.query.filter_by(external_id=data["test_external_id"]).first()
 
-            if (
-                "results" not in data
-                or not isinstance(data["results"], list)
-                or len(data["results"]) == 0
-            ):
-                return error_response("Debe ingresar resultados")
+        if not test:
+            return error_response("Test no encontrado")
 
-            date_str = data.get("date")
-
-            if date_str:
-                try:
-                    evaluation_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                except ValueError:
-                    return error_response(
-                        "Formato de fecha inválido, debe ser YYYY-MM-DD"
-                    )
-            else:
-                evaluation_date = None
-
-            evaluation = Evaluation(
-                participant_id=participant.id,
-                test_id=test.id,
-                date=evaluation_date,
-                general_observations=data.get("general_observations"),
+        results = data.get("results", [])
+        if not any(
+            isinstance(r.get("value"), (int, float)) and r.get("value") > 0
+            for r in results
+        ):
+            return error_response(
+                "Debe ingresar al menos un valor válido para los ejercicios"
             )
 
-            db.session.add(evaluation)
-            db.session.flush()
+        date_str = data.get("date")
+        if date_str:
+            try:
+                evaluation_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                return error_response("Formato de fecha inválido, debe ser YYYY-MM-DD")
+        else:
+            evaluation_date = None
 
-            valid_exercises = {
-                ex.external_id: ex.id
-                for ex in TestExercise.query.filter_by(test_id=test.id).all()
-            }
+        evaluation = Evaluation(
+            participant_id=participant.id,
+            test_id=test.id,
+            date=evaluation_date,
+            general_observations=data.get("general_observations"),
+        )
 
-            used = set()
+        db.session.add(evaluation)
+        db.session.flush()
 
-            for r in data["results"]:
-                ex_id = valid_exercises.get(r.get("test_exercise_external_id"))
+        valid_exercises = {
+            ex.external_id: ex.id
+            for ex in TestExercise.query.filter_by(test_id=test.id).all()
+        }
 
-                if not ex_id:
-                    return error_response("Ejercicio no pertenece al test")
+        used = set()
 
-                if ex_id in used:
-                    return error_response("Ejercicio duplicado")
+        for r in results:
+            ex_id = valid_exercises.get(r.get("test_exercise_external_id"))
 
-                used.add(ex_id)
+            if not ex_id:
+                return error_response("Ejercicio no pertenece al test")
 
-                db.session.add(
-                    EvaluationResult(
-                        evaluation_id=evaluation.id,
-                        test_exercise_id=ex_id,
-                        value=r.get("value"),
-                    )
+            if ex_id in used:
+                return error_response("Ejercicio duplicado")
+
+            used.add(ex_id)
+
+            value = r.get("value")
+            if value is None:
+                return error_response("Debe ingresar un valor para cada ejercicio")
+
+            if not isinstance(value, (int, float)) or value <= 0:
+                return error_response(
+                    "Debe ingresar un valor mayor que 0 para cada ejercicio"
                 )
 
-            db.session.commit()
-
-            return success_response(
-                msg="Test aplicado correctamente",
-                data={"evaluation_external_id": evaluation.external_id},
+            db.session.add(
+                EvaluationResult(
+                    evaluation_id=evaluation.id,
+                    test_exercise_id=ex_id,
+                    value=value,
+                )
             )
 
-        except Exception as e:
-            db.session.rollback()
-            return error_response(f"Internal error: {str(e)}", 500)
+        db.session.commit()
+
+        return success_response(
+            msg="Test aplicado correctamente",
+            data={"evaluation_external_id": evaluation.external_id},
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        return error_response(f"Internal error: {str(e)}", 500)
 
     # def history(
     #     self,
