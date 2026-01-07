@@ -15,11 +15,11 @@ class AttendanceController:
             campos = ["participant_external_id", "schedule_external_id", "status"]
             for campo in campos:
                 if campo not in data:
-                    return error_response(f"Falta el campo requerido: {campo}")
+                    return error_response(f"Falta el campo requerido: {campo}", code=400)
 
             valid_statuses = [Attendance.Status.PRESENT, Attendance.Status.ABSENT]
             if data["status"] not in valid_statuses:
-                return error_response(f"Estado inválido. Use: {valid_statuses}")
+                return error_response(f"Estado inválido. Use: {valid_statuses}", code=400)
 
             participant = Participant.query.filter_by(
                 external_id=data["participant_external_id"]
@@ -37,7 +37,7 @@ class AttendanceController:
             try:
                 datetime.strptime(fecha, "%Y-%m-%d")
             except ValueError:
-                return error_response("Formato de fecha inválido. Use YYYY-MM-DD")
+                return error_response("Formato de fecha inválido. Use YYYY-MM-DD", code=400)
 
             # Check duplicates
             existing_attendance = Attendance.query.filter_by(
@@ -46,7 +46,7 @@ class AttendanceController:
                 date=fecha
             ).first()
             if existing_attendance:
-                 return error_response(f"El participante ya tiene asistencia registrada para esta fecha y horario")
+                 return error_response(f"El participante ya tiene asistencia registrada para esta fecha y horario", code=400)
 
             # Check capacity
             current_count = Attendance.query.filter_by(
@@ -56,7 +56,7 @@ class AttendanceController:
             ).count()
             
             if current_count >= schedule.maxSlots:
-                return error_response(f"Cupos llenos para esta sesión ({schedule.maxSlots} slots)")
+                return error_response(f"Cupos llenos para esta sesión ({schedule.maxSlots} slots)", code=400)
 
             nuevo = Attendance(
                 participant_id=participant.id,
@@ -79,7 +79,7 @@ class AttendanceController:
             )
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def register_bulk_attendance(self, data):
         """Registrar múltiples asistencias de una sesión"""
@@ -144,7 +144,7 @@ class AttendanceController:
             )
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def get_attendances(self, filters=None):
         """Obtener todas las asistencias con filtros opcionales"""
@@ -186,7 +186,7 @@ class AttendanceController:
                 msg="Asistencias obtenidas correctamente", data=result
             )
         except Exception as e:
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def get_attendance_by_id(self, external_id):
         """Obtener una asistencia específica por su external_id"""
@@ -207,7 +207,7 @@ class AttendanceController:
                 },
             )
         except Exception as e:
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def update_attendance(self, external_id, data):
         """Actualizar una asistencia existente"""
@@ -222,7 +222,7 @@ class AttendanceController:
                     Attendance.Status.PRESENT,
                     Attendance.Status.ABSENT,
                 ]:
-                    return error_response("Estado inválido. Use: present, absent")
+                    return error_response("Estado inválido. Use: present, absent", code=400)
                 attendance.status = data["status"]
 
             db.session.commit()
@@ -239,7 +239,7 @@ class AttendanceController:
             )
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def delete_attendance(self, external_id):
         """Eliminar una asistencia"""
@@ -263,7 +263,7 @@ class AttendanceController:
             return success_response(msg="Asistencia eliminada correctamente", data=data)
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def get_participant_summary(self, participant_external_id):
         """Obtener resumen de asistencias de un participante"""
@@ -298,7 +298,7 @@ class AttendanceController:
                 },
             )
         except Exception as e:
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     # ========== MÉTODOS PÚBLICOS PARA EL FRONTEND ==========
 
@@ -331,7 +331,7 @@ class AttendanceController:
                 msg="Participantes obtenidos correctamente", data=result
             )
         except Exception as e:
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def get_schedules(self):
         """Obtener todos los horarios"""
@@ -358,7 +358,7 @@ class AttendanceController:
                 )
             return success_response(msg="Horarios obtenidos correctamente", data=result)
         except Exception as e:
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def create_schedule(self, data):
         """Crear un nuevo horario/sesión"""
@@ -459,7 +459,7 @@ class AttendanceController:
             )
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Error creando horario: {str(e)}")
+            return error_response(f"Error creando horario: {str(e)}", code=500)
 
     def update_schedule(self, schedule_id, data):
         """Actualizar un horario"""
@@ -497,7 +497,7 @@ class AttendanceController:
             )
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Error actualizando horario: {str(e)}")
+            return error_response(f"Error actualizando horario: {str(e)}", code=500)
 
     def delete_schedule(self, schedule_id):
         """Eliminar un horario"""
@@ -510,7 +510,7 @@ class AttendanceController:
             return success_response(msg="Horario eliminado correctamente (Soft Delete)")
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Error eliminando horario: {str(e)}")
+            return error_response(f"Error eliminando horario: {str(e)}", code=500)
 
     def get_today_sessions(self):
         """Obtener las sesiones programadas para hoy"""
@@ -561,7 +561,7 @@ class AttendanceController:
                 msg=f"Sesiones de hoy obtenidas correctamente", data=result
             )
         except Exception as e:
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def get_history(
         self, date_from=None, date_to=None, schedule_id=None, day_filter=None
@@ -609,7 +609,7 @@ class AttendanceController:
                 )
             return success_response(msg="Historial obtenido correctamente", data=result)
         except Exception as e:
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def register_public_attendance(self, data):
         """Registrar asistencia desde el frontend"""
@@ -622,7 +622,7 @@ class AttendanceController:
             result = [{"name": p[0]} for p in programs if p[0]]
             return success_response(msg="Programas obtenidos", data=result)
         except Exception as e:
-            return error_response(f"Error obteniendo programas: {str(e)}")
+            return error_response(f"Error obteniendo programas: {str(e)}", code=500)
 
     def get_session_detail(self, schedule_id, date):
         """Obtener detalle de asistencia de una sesión"""
@@ -656,7 +656,7 @@ class AttendanceController:
 
             return success_response(msg="Detalle de sesión obtenido", data=result)
         except Exception as e:
-            return error_response(f"Error: {str(e)}")
+            return error_response(f"Error: {str(e)}", code=500)
 
     def delete_session_attendance(self, schedule_id, date):
         """Eliminar asistencia de una sesión"""
@@ -673,7 +673,7 @@ class AttendanceController:
             )
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Error: {str(e)}")
+            return error_response(f"Error: {str(e)}", code=500)
 
     def _calculate_attendance_percentage(self, participant_id):
         """Calcula el porcentaje de asistencia de un participante"""
@@ -692,11 +692,11 @@ class AttendanceController:
         """Registrar múltiples asistencias de una sesión"""
         try:
             if "schedule_external_id" not in data:
-                return error_response("Falta el campo: schedule_external_id")
+                return error_response("Falta el campo: schedule_external_id", code=400)
 
             if "attendances" not in data or not isinstance(data["attendances"], list):
                 return error_response(
-                    "Falta el campo: attendances (debe ser una lista)"
+                    "Falta el campo: attendances (debe ser una lista)", code=400
                 )
 
             schedule = Schedule.query.filter_by(
@@ -751,7 +751,7 @@ class AttendanceController:
             )
         except Exception as e:
             db.session.rollback()
-            return error_response(f"Error interno: {str(e)}")
+            return error_response(f"Error interno: {str(e)}", code=500)
 
     def calculate_attendance_average(self, attendances):
         """Calcula el promedio de asistencia de una lista de registros"""
