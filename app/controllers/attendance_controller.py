@@ -348,6 +348,12 @@ class AttendanceController:
                         "end_time": s.endTime,
                         "max_slots": s.maxSlots,
                         "program": s.program,
+                        "specific_date": s.specificDate,
+                        "start_date": s.startDate,
+                        "end_date": s.endDate,
+                        "is_recurring": s.isRecurring,
+                        "location": s.location,
+                        "description": s.description
                     }
                 )
             return success_response(msg="Horarios obtenidos correctamente", data=result)
@@ -364,13 +370,38 @@ class AttendanceController:
             end_time = data.get("end_time") or data.get("endTime")
             max_slots = data.get("max_slots") or data.get("maxSlots")
             program = data.get("program")
+            
+            # Campos opcionales de fecha
+            specific_date = data.get("specific_date") or data.get("specificDate")
+            start_date = data.get("start_date") or data.get("startDate")
+            end_date = data.get("end_date") or data.get("endDate")
+            is_recurring = data.get("is_recurring") if data.get("is_recurring") is not None else data.get("isRecurring")
+            location = data.get("location")
+            description = data.get("description")
 
-            if not all([name, day_of_week, start_time, end_time, max_slots, program]):
+            if not all([name, start_time, end_time, max_slots, program]):
                 return error_response(f"Faltan campos requeridos")
+            
+            # Validar que tenga dayOfWeek O specificDate (al menos uno)
+            if not day_of_week and not specific_date:
+                return error_response("Se requiere dayOfWeek o specificDate")
 
             valid_programs = ["INICIACION", "FUNCIONAL"]
             if program not in valid_programs:
                 return error_response(f"Programa inválido. Use: {valid_programs}")
+            
+            # Validar fechas no sean pasadas
+            from datetime import date as date_class
+            hoy = date_class.today().isoformat()
+            
+            if specific_date and specific_date < hoy:
+                return error_response("No se puede crear sesión con fecha pasada")
+            
+            if start_date and start_date < hoy:
+                return error_response("La fecha de inicio no puede ser anterior a hoy")
+            
+            if end_date and start_date and end_date < start_date:
+                return error_response("La fecha de fin debe ser posterior a la fecha de inicio")
 
             valid_days = [
                 "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"
@@ -409,6 +440,12 @@ class AttendanceController:
                 endTime=end_time,
                 maxSlots=max_slots,
                 program=program,
+                specificDate=specific_date,
+                startDate=start_date,
+                endDate=end_date,
+                isRecurring=is_recurring if is_recurring is not None else (specific_date is None),
+                location=location,
+                description=description
             )
             db.session.add(nuevo_schedule)
             db.session.commit()
@@ -478,20 +515,32 @@ class AttendanceController:
     def get_today_sessions(self):
         """Obtener las sesiones programadas para hoy"""
         try:
-            dias_semana = [
-                "monday",
-                "tuesday",
-                "wednesday",
-                "thursday",
-                "friday",
-                "saturday",
-                "sunday",
-            ]
-            hoy = dias_semana[datetime.now().weekday()]
+            from datetime import date as date_class
+            dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+            hoy_date = date_class.today().isoformat()
+            hoy_dia = dias_semana[datetime.now().weekday()]
 
-            schedules = Schedule.query.filter_by(dayOfWeek=hoy, status="active").all()
+            # Obtener sesiones recurrentes del día Y sesiones con fecha específica de hoy
+            schedules = Schedule.query.filter(
+                Schedule.status == "active"
+            ).filter(
+                db.or_(
+                    Schedule.dayOfWeek == hoy_dia,
+                    Schedule.specificDate == hoy_date
+                )
+            ).all()
+            
             result = []
             for s in schedules:
+                # Verificar si ya tiene asistencias registradas para hoy
+                attendances_count = Attendance.query.filter_by(
+                    schedule_id=s.id,
+                    date=hoy_date
+                ).count()
+                
+                # Determinar el estado
+                status = "completada" if attendances_count > 0 else "pendiente"
+                
                 result.append(
                     {
                         "external_id": s.external_id,
@@ -500,10 +549,16 @@ class AttendanceController:
                         "start_time": s.startTime,
                         "end_time": s.endTime,
                         "program": s.program,
+                        "specific_date": s.specificDate,
+                        "is_recurring": s.isRecurring,
+                        "location": s.location,
+                        "status": status,
+                        "attendances_registered": attendances_count,
+                        "has_attendances": attendances_count > 0
                     }
                 )
             return success_response(
-                msg=f"Sesiones de hoy ({hoy}) obtenidas correctamente", data=result
+                msg=f"Sesiones de hoy obtenidas correctamente", data=result
             )
         except Exception as e:
             return error_response(f"Error interno: {str(e)}")
@@ -697,3 +752,16 @@ class AttendanceController:
         except Exception as e:
             db.session.rollback()
             return error_response(f"Error interno: {str(e)}")
+
+    def calculate_attendance_average(self, attendances):
+        """Calcula el promedio de asistencia de una lista de registros"""
+        if not attendances or len(attendances) == 0:
+            return 0
+        
+        total = len(attendances)
+        present_count = sum(
+            1 for a in attendances 
+            if a.get("status", "").lower() in ["present", "presente"]
+        )
+        
+        return round((present_count / total) * 100, 2) if total > 0 else 0
