@@ -146,7 +146,7 @@ class TestMockScenarios(unittest.TestCase):
                 "email": f"nino{unique_dni}@test.com"
             },
             "responsible": {
-                "name": "Padre Test",
+                "name": "Padre",
                 "dni": resp_dni,
                 "phone": "0999999988"
             },
@@ -327,7 +327,7 @@ class TestMockScenarios(unittest.TestCase):
                 "address": "Test"
             },
             "responsible": {
-                "name": "Padre Adolescente",
+                "name": "Padre",
                 "dni": resp_dni,
                 "phone": "0998877665"
             },
