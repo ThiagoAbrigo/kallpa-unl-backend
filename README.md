@@ -129,17 +129,7 @@ Las pruebas utilizan **mocks** y **NO requieren** que el servidor esté corriend
 Ejecuta el siguiente comando desde la raíz del proyecto:
 
 ```bash
-python3 -m unittest tests.pruebas_finales tests.pruebas_josep -v
+python3 -m unittest tests.pruebas_finales -v
 ```
 
 Deberías ver una salida indicando `OK` si todas las pruebas pasan correctamente.
-
-### Ejecutar archivos de prueba individuales:
-
-```bash
-# Solo pruebas_finales
-python3 -m unittest tests.pruebas_finales -v
-
-# Solo pruebas_josep
-python3 -m unittest tests.pruebas_josep -v
-```
