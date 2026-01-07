@@ -25,6 +25,13 @@ git clone https://github.com/ThiagoAbrigo/kallpa-unl-backend.git
 cd kallpa-unl-backend
 ```
 
+### 2.2. Cambiar a la rama de pruebas (Stage)
+Es **CRUCIAL** cambiar a la rama `stage` para tener la versión correcta y estable del código para pruebas:
+
+```bash
+git checkout stage
+```
+
 ---
 
 ## 🐍 3. Configuración del Entorno Virtual
