@@ -524,11 +524,11 @@ class UserController:
                 # Validar nombre del responsable
                 resp_name = responsible.get("name")
                 if resp_name:
-                    name_pattern = r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+$'
+                    name_pattern = r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ ]+$'
                     if len(resp_name.strip()) < 2:
                         errors["responsibleName"] = "Nombre debe tener al menos 2 caracteres"
                     elif not re.match(name_pattern, resp_name.strip()):
-                        errors["responsibleName"] = "Nombre solo puede contener letras (sin espacios)"
+                        errors["responsibleName"] = "Nombre solo puede contener letras"
 
                 # Validar DNI del responsable
                 responsible_dni = responsible.get("dni")
