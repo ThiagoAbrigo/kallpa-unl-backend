@@ -2,7 +2,7 @@
 
 Este manual detalla paso a paso cómo configurar el entorno, la base de datos y ejecutar el proyecto junto con sus pruebas automatizadas.
 
-**Rama objetivo:** `stage`
+**Rama objetivo:** `main`
 
 ---
 
@@ -25,11 +25,11 @@ git clone https://github.com/ThiagoAbrigo/kallpa-unl-backend.git
 cd kallpa-unl-backend
 ```
 
-### 2.2. Cambiar a la rama de pruebas (Stage)
-Es **CRUCIAL** cambiar a la rama `stage` para tener la versión correcta y estable del código para pruebas:
+### 2.2. Cambiar a la rama principal (Main)
+Es **CRUCIAL** cambiar a la rama `main` para tener la versión correcta y estable del código:
 
 ```bash
-git checkout stage
+git checkout main
 ```
 
 ---
@@ -73,7 +73,7 @@ pip install -r requirements.txt
 ## 🗄️ 4. Configuración de la Base de Datos
 
 ### 4.1. Crear la Base de Datos
-Debes crear una base de datos llamada `kallpa_bd`. Puedes usar pgAdmin o la terminal si tienes el comando `createdb`:
+Debes crear una base de datos llamada `kallpa_bd`. Puedes usar pgAdmin o la terminal:
 
 ```bash
 createdb -h localhost -U postgres kallpa_bd
@@ -81,7 +81,13 @@ createdb -h localhost -U postgres kallpa_bd
 *Te pedirá la contraseña de tu usuario postgres.*
 
 ### 4.2. Configurar Variables de Entorno (.env)
-Crea un archivo llamado `.env` en la raíz del proyecto (`kallpa-unl-backend/`). Pega el siguiente contenido exacto:
+Copia el archivo de ejemplo y edítalo con tus credenciales:
+
+```bash
+cp .env.example .env
+```
+
+Luego edita el archivo `.env` con tu configuración:
 
 ```ini
 FLASK_APP=Kallpa
@@ -90,16 +96,18 @@ FLASK_ENV=development
 # Configuración de Base de Datos
 USE_POSTGRES=true
 PGUSER=postgres
-PGPASSWORD=1234
+PGPASSWORD=TU_PASSWORD_AQUI
 PGHOST=localhost
 PGDATABASE=kallpa_bd
 PGPORT=5432
+
+# Claves secretas
 SECRET_KEY=kallpa123
 JWT_SECRET_KEY=jwt_secret_kallpa
 ```
 
 > [!IMPORTANT]
-> Asegúrate de que `PGPASSWORD` coincida con la contraseña de tu usuario `postgres` local. Si tu contraseña es diferente a `1234`, cámbiala en este archivo.
+> Asegúrate de que `PGPASSWORD` coincida con la contraseña de tu usuario `postgres` local.
 
 ---
 
@@ -116,14 +124,22 @@ Si todo es correcto, verás: `Running on http://127.0.0.1:5000`
 
 ## ✅ 6. Ejecución de Pruebas
 
-Para validar el funcionamiento del sistema, ejecutaremos el set de pruebas finales.
+Las pruebas utilizan **mocks** y **NO requieren** que el servidor esté corriendo ni conexión a la base de datos.
 
-**Asegúrate de que el servidor (`python index.py`) esté DETENIDO o corriendo en otra terminal.**
-
-Ejecuta el siguiente comando:
+Ejecuta el siguiente comando desde la raíz del proyecto:
 
 ```bash
-python -m unittest tests/pruebas_finales.py
+python3 -m unittest tests.pruebas_finales tests.pruebas_josep -v
 ```
 
 Deberías ver una salida indicando `OK` si todas las pruebas pasan correctamente.
+
+### Ejecutar archivos de prueba individuales:
+
+```bash
+# Solo pruebas_finales
+python3 -m unittest tests.pruebas_finales -v
+
+# Solo pruebas_josep
+python3 -m unittest tests.pruebas_josep -v
+```
