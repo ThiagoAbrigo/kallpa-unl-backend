@@ -6,7 +6,7 @@ from app.controllers.assessment_controller import AssessmentController
 class TestAssessmentController(unittest.TestCase):
     #comando para ejecutar las pruebas
     #python -m unittest tests.pruebas_santiago -v
-    
+
     def setUp(self):
         self.controller = AssessmentController()
 
@@ -35,6 +35,7 @@ class TestAssessmentController(unittest.TestCase):
 
         result = self.controller.register(data)
 
+        print(result["msg"])
         self.assertEqual(result["code"], 200)
         self.assertEqual(result["status"], "ok")
         self.assertIn("bmi", result["data"])
@@ -73,6 +74,7 @@ class TestAssessmentController(unittest.TestCase):
         # Aquí 400 es lo esperado
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["status"], "error")
+        print(result["errors"]["weight"])
         self.assertIn("weight", result["errors"])
 
     @patch("app.controllers.assessment_controller.db.session")
