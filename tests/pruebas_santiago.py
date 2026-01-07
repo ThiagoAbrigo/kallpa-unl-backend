@@ -1,182 +1,112 @@
 import unittest
-import requests
-import json
-import uuid
-import random
-import string
+from unittest.mock import patch, MagicMock
+from app.controllers.assessment_controller import AssessmentController
 
-BASE_URL = "http://127.0.0.1:5000/api"
 
-class TestMockScenarios(unittest.TestCase):
+class TestAssessmentController(unittest.TestCase):
+    #comando para ejecutar las pruebas
+    #python -m unittest tests.pruebas_santiago -v
+    
     def setUp(self):
-        self.headers = {"Content-Type": "application/json"}
-        self.admin_email = "admin@kallpa.com"
-        self.admin_password = "123456" 
-        self.token = None
+        self.controller = AssessmentController()
 
-    def _generate_numeric_string(self, length):
-        return ''.join(random.choices(string.digits, k=length))
+    @patch("app.controllers.assessment_controller.db.session")
+    @patch("app.controllers.assessment_controller.log_activity")
+    @patch("app.controllers.assessment_controller.Participant")
+    def test_register_success(self, mock_participant, mock_log_activity, mock_session):
+        fake_participant = MagicMock()
+        fake_participant.id = 1
+        fake_participant.firstName = "Carlos"
+        fake_participant.lastName = "Lopez"
+        fake_participant.external_id = "abc123"
 
-    def test_tc_01_login_success(self):
-        """TC-01: Inicio de Sesión - Ingreso exitoso"""
-        payload = {
-            "email": self.admin_email,
-            "password": self.admin_password
-        }
-        response = requests.post(f"{BASE_URL}/auth/login", json=payload, headers=self.headers)
-        self.assertEqual(response.status_code, 200, "TC-01: Debería retornar 200 OK")
-        data = response.json()
-        self.assertIn("token", data, "TC-01: La respuesta debe contener un token")
-        self.__class__.token = data["token"]
-        print("TC-01: Login Exitoso - OK")
-
-    def _get_auth_headers(self):
-        if not self.token:
-             payload = {"email": self.admin_email, "password": self.admin_password}
-             resp = requests.post(f"{BASE_URL}/auth/login", json=payload)
-             if resp.status_code == 200:
-                 self.token = resp.json()["token"]
-        
-        return {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.token}"
-        }
-
-    def test_tc_01_registro_exitoso_medidas_antropometricast(self):
-        """TC-01: Registro de medidas antropometricas - Registro Exitoso"""
-        unique_id = str(uuid.uuid4())[:8]
-        participant_payload = {
-            "firstName": "Carlos",
-            "lastName": "Lopez",
-            "dni": f"10{self._generate_numeric_string(8)}",
-            "age": 25,
-            "program": "FUNCIONAL",
-            "type": "ESTUDIANTE",
-            "phone": "0999999999",
-            "email": f"carlos{unique_id}@test.com",
-            "address": "Av. Siempre Viva"
-        }
-
-        response_participant = requests.post(
-            f"{BASE_URL}/save-participants",
-            json=participant_payload,
-            headers=self._get_auth_headers()
+        mock_participant.query.filter_by.return_value.first.return_value = (
+            fake_participant
         )
 
-        self.assertIn(response_participant.status_code, [200, 201])
-
-        participant_external_id = response_participant.json()["data"]["participant_external_id"]
-
-        assessment_payload = {
-            "participant_external_id": participant_external_id,
-            "weight": 10,
+        data = {
+            "participant_external_id": "abc123",
+            "weight": 70,  # valor válido
             "height": 1.75,
-            "waistPerimeter": 2,
-            "wingspan": 2,
-            "date": "2025-01-05"
+            "waistPerimeter": 0.8,
+            "wingspan": 1.7,
+            "date": "2025-01-05",
         }
 
-        response_assessment = requests.post(
-            f"{BASE_URL}/save-assessment",
-            json=assessment_payload,
-            headers=self._get_auth_headers()
-        )
-        if response_assessment.status_code != 200:
-            print("Error al registrar medidas (TC-01):", response_assessment.json())
-        else:
-            data = response_assessment.json()["data"]
-            print("Registro de Medidas Exitoso (TC-01):", data)
+        result = self.controller.register(data)
 
-    def test_tc_02_registro_medidas_falla_campo_obligatorio(self):
-        """TC-02: Registro de medidas antropométricas - Falla por campo obligatorio"""
-        unique_id = str(uuid.uuid4())[:8]
-        participant_payload = {
-            "firstName": "Ana",
-            "lastName": "Martinez",
-            "dni": f"11{self._generate_numeric_string(8)}",
-            "age": 30,
-            "program": "FUNCIONAL",
-            "type": "ESTUDIANTE",
-            "phone": "0998888888",
-            "email": f"ana{unique_id}@test.com",
-            "address": "Calle Test"
+        self.assertEqual(result["code"], 200)
+        self.assertEqual(result["status"], "ok")
+        self.assertIn("bmi", result["data"])
+
+        mock_session.add.assert_called_once()
+        mock_session.commit.assert_called_once()
+        mock_log_activity.assert_called_once()
+
+    @patch("app.controllers.assessment_controller.db.session")
+    @patch("app.controllers.assessment_controller.log_activity")
+    @patch("app.controllers.assessment_controller.Participant")
+    def test_register_negative_weight(
+        self, mock_participant, mock_log_activity, mock_session
+    ):
+        fake_participant = MagicMock()
+        fake_participant.id = 1
+        fake_participant.firstName = "Carlos"
+        fake_participant.lastName = "Lopez"
+        fake_participant.external_id = "abc123"
+
+        mock_participant.query.filter_by.return_value.first.return_value = (
+            fake_participant
+        )
+
+        data = {
+            "participant_external_id": "abc123",
+            "weight": -80,  # valor inválido
+            "height": 1.76,
+            "waistPerimeter": 0.8,
+            "wingspan": 1.7,
+            "date": "2025-01-05",
         }
 
-        response_participant = requests.post(
-            f"{BASE_URL}/save-participants",
-            json=participant_payload,
-            headers=self._get_auth_headers()
-        )
-        self.assertIn(response_participant.status_code, [200, 201])
+        result = self.controller.register(data)
 
-        participant_external_id = response_participant.json()["data"]["participant_external_id"]
+        # Aquí 400 es lo esperado
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["status"], "error")
+        self.assertIn("weight", result["errors"])
 
-        assessment_payload = {
-            "participant_external_id": participant_external_id,
-            "weight": 65,
-            # "height": 1.65,  Campo obligatorio omitido
-            "waistPerimeter": 75,
-            "wingspan": 160,
-            "date": "2025-01-05"
+    @patch("app.controllers.assessment_controller.db.session")
+    @patch("app.controllers.assessment_controller.log_activity")
+    @patch("app.controllers.assessment_controller.Participant")
+    def test_register_validate_all_fields(self, mock_participant, mock_log_activity, mock_session):
+        fake_participant = MagicMock()
+        fake_participant.id = 1
+        fake_participant.firstName = "Carlos"
+        fake_participant.lastName = "Lopez"
+        fake_participant.external_id = "abc123"
+        mock_participant.query.filter_by.return_value.first.return_value = fake_participant
+
+        data = {
+            "participant_external_id": None,  # obligatorio faltante
+            "weight": -5,                     # inválido
+            "height": 3.0,                    # fuera de rango
+            "waistPerimeter": 0.1,            # fuera de rango
+            "wingspan": 3.0,                  # fuera de rango
+            "date": None                       # obligatorio faltante
         }
 
-        response_assessment = requests.post(
-            f"{BASE_URL}/save-assessment",
-            json=assessment_payload,
-            headers=self._get_auth_headers()
-        )
-        if response_assessment.status_code != 200:
-            print("Error al registrar medidas (TC-02):", response_assessment.json())
-        else:
-            data = response_assessment.json()["data"]
-            print("Registro de Medidas Exitoso (TC-02):", data)
+        result = self.controller.register(data)
 
-    def test_tc_03_registro_medidas_altura_fuera_de_rango(self):
-        """TC-03: Registro de medidas antropométricas - Altura fuera de rango"""
+        # 🔹 Validaciones
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["status"], "error")
+        self.assertIn("participant_external_id", result["errors"])
+        self.assertIn("weight", result["errors"])
+        self.assertIn("height", result["errors"])
+        self.assertIn("waistPerimeter", result["errors"])
+        self.assertIn("wingspan", result["errors"])
+        self.assertIn("date", result["errors"])
 
-        unique_id = str(uuid.uuid4())[:8]
-        participant_payload = {
-            "firstName": "Luis",
-            "lastName": "Gomez",
-            "dni": f"12{self._generate_numeric_string(8)}",
-            "age": 28,
-            "program": "FUNCIONAL",
-            "type": "ESTUDIANTE",
-            "phone": "0997777777",
-            "email": f"luis{unique_id}@test.com",
-            "address": "Av Central"
-        }
-
-        response_participant = requests.post(
-            f"{BASE_URL}/save-participants",
-            json=participant_payload,
-            headers=self._get_auth_headers()
-        )
-
-        self.assertIn(response_participant.status_code, [200, 201])
-
-        participant_external_id = response_participant.json()["data"]["participant_external_id"]
-
-        # Altura completamente inválida
-        assessment_payload = {
-            "participant_external_id": participant_external_id,
-            "weight": 70,
-            "height": -800,  #Valor irreal
-            "waistPerimeter": 80,
-            "wingspan": 170,
-            "date": "2025-01-05"
-        }
-
-        response_assessment = requests.post(
-            f"{BASE_URL}/save-assessment",
-            json=assessment_payload,
-            headers=self._get_auth_headers()
-        )
-        if response_assessment.status_code != 200:
-            print("Error al registrar medidas (TC-03):", response_assessment.json())
-        else:
-            data = response_assessment.json()["data"]
-            print("Registro de Medidas Exitoso (TC-03):", data)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        mock_session.add.assert_not_called()
+        mock_session.commit.assert_not_called()
+        mock_log_activity.assert_not_called()
