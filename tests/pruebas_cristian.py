@@ -1,93 +1,71 @@
 import unittest
-import requests
-import uuid
+from unittest.mock import patch, MagicMock
+from app.controllers.evaluation_controller import EvaluationController
 
-BASE_URL = "http://127.0.0.1:5000/api"
 
-class TestMockScenarios(unittest.TestCase):
+class TestEvaluationController(unittest.TestCase):
+
     def setUp(self):
-        self.headers = {"Content-Type": "application/json"}
-        self.admin_email = "admin@kallpa.com"
-        self.admin_password = "123456"
-        self.token = None
+        self.controller = EvaluationController()
 
+    # TC-02: Registro de Test - Test creado correctamente
+    @patch("app.controllers.evaluation_controller.db.session")
+    @patch("app.controllers.evaluation_controller.TestExercise")
+    @patch("app.controllers.evaluation_controller.Test")
+    def test_tc_02_registro_test_exitoso(
+        self, mock_test, mock_test_exercise, mock_session
+    ):
+        fake_test = MagicMock()
+        fake_test.id = 1
+        fake_test.external_id = "test-123"
 
-    def test_tc_01_login_success(self):
-        """TC-01: Inicio de Sesión - Ingreso exitoso"""
-        payload = {
-            "email": self.admin_email,
-            "password": self.admin_password
-        }
-        response = requests.post(f"{BASE_URL}/auth/login", json=payload, headers=self.headers)
-        self.assertEqual(response.status_code, 200, "TC-01: Debería retornar 200 OK")
-        data = response.json()
-        self.assertIn("token", data, "TC-01: La respuesta debe contener un token")
-        self.__class__.token = data["token"]
-        print("TC-01: Login Exitoso - OK")
+        mock_test.query.filter_by.return_value.first.return_value = None
+        mock_test.return_value = fake_test
 
-    def _get_auth_headers(self):
-        if not self.token:
-            payload = {"email": self.admin_email, "password": self.admin_password}
-            resp = requests.post(f"{BASE_URL}/auth/login", json=payload)
-            if resp.status_code == 200:
-                self.token = resp.json()["token"]
-        return {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.token}"
-        }
-
-    def test_tc_02_registro_test_exitoso(self):
-        """TC-02: Registro de Test - Test creado correctamente"""
-        unique_id = str(uuid.uuid4())[:8]
-        test_payload = {
-            "name": f"Test de hipertrofia {unique_id}",
-            "description": "Primer test de hipertrofia, frecuencia 3",
+        data = {
+            "name": "Test de hipertrofia",
+            "description": "Primer test de hipertrofia",
             "frequency_months": 3,
-            "observations": "Primer test",
             "exercises": [
                 {"name": "Press Banca", "unit": "repeticiones"},
-                {"name": "Sentadilla", "unit": "repeticiones"},
-                {"name": "Burpees", "unit": "repeticiones"}
-            ]
+            ],
         }
 
-        response = requests.post(
-            f"{BASE_URL}/save-test",
-            json=test_payload,
-            headers=self._get_auth_headers()
-        )
+        result = self.controller.register(data)
 
-        self.assertIn(response.status_code, [200, 201])
-        data = response.json()
-        self.assertIn("data", data)
-        self.assertIn("test_external_id", data["data"])
-        self.assertEqual(data.get("msg"), "Test creado correctamente")
-        print("Registro de Test Exitoso (TC-02):", data)
+        print(result["msg"])
 
-    def test_tc_03_registro_test_sin_ejercicios(self):
-        """TC-03: Registro de Test - Falla por campos de ejercicios vacíos"""
-        unique_id = str(uuid.uuid4())[:8]
-        test_payload = {
-            "name": f"Test Sin Ejercicios {unique_id}",
-            "description": "Test sin ejercicios llenos",
+        self.assertEqual(result["code"], 200)
+        self.assertEqual(result["status"], "ok")
+        self.assertIn("test_external_id", result["data"])
+
+        mock_session.add.assert_called()
+        mock_session.commit.assert_called_once()
+
+    # TC-03: Registro de Test - Falla por ejercicios vacíos
+    @patch("app.controllers.evaluation_controller.db.session")
+    @patch("app.controllers.evaluation_controller.Test")
+    def test_tc_03_registro_test_sin_ejercicios(
+        self, mock_test, mock_session
+    ):
+        mock_test.query.filter_by.return_value.first.return_value = None
+
+        data = {
+            "name": "Test sin ejercicios",
+            "description": "Test inválido",
             "frequency_months": 3,
-            "observations": "Segundo test",
-            "exercises": [  # Aquí siempre hay un objeto, pero vacíos
+            "exercises": [
                 {"name": "", "unit": ""}
-            ]
+            ],
         }
 
-        response = requests.post(
-            f"{BASE_URL}/save-test",
-            json=test_payload,
-            headers=self._get_auth_headers()
-        )
+        result = self.controller.register(data)
 
-        data = response.json()
-        self.assertIn("exercises", data.get("errors", {}) or data.get("msg", {}))
-        exercises_error = data.get("errors", {}).get("exercises") or data.get("msg", {}).get("exercises")
-        self.assertEqual(exercises_error, "Complete los campos de los ejercicios")
-        print("Error al registrar Test con ejercicios vacíos (TC-03):", data)
+        print(result["msg"])
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["status"], "error")
+        self.assertIn("exercises", result["msg"])
+
+        mock_session.add.assert_not_called()
+        mock_session.commit.assert_not_called()

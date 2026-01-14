@@ -45,8 +45,7 @@ class AssessmentController:
             ]
 
             return success_response(
-                msg="Evaluaciones listadas correctamente",
-                data=data,
+                msg="Evaluaciones listadas correctamente", data=data, code=200
             )
 
         except Exception as e:
@@ -64,8 +63,8 @@ class AssessmentController:
             wingspan = data.get("wingspan")
 
             # 2. Validar existencia (obligatorios)
-            if participant_external_id is None:
-                errors["participant_external_id"] = "Campo requerido"
+            if not participant_external_id or not str(participant_external_id).strip():
+                errors["participant_external_id"] = "Selecciona un participante"
 
             if weight is None:
                 errors["weight"] = "Campo requerido"
@@ -75,6 +74,12 @@ class AssessmentController:
 
             if date is None:
                 errors["date"] = "Campo requerido"
+
+            if waistPerimeter is None:
+                waistPerimeter = 0
+
+            if wingspan is None:
+                wingspan = 0
 
             # 3. Validar tipos (letras, strings, etc.)
             if weight is not None and not isinstance(weight, (int, float)):
@@ -106,29 +111,17 @@ class AssessmentController:
                 elif height < 0.3 or height > 2.5:
                     errors["height"] = "La altura debe estar entre 0.3 y 2.5 metros"
 
-            # Perímetro de cintura (opcional)
-            if isinstance(waistPerimeter, (int, float)):
-                if waistPerimeter <= 0:
-                    errors["waistPerimeter"] = "Debe ser mayor a 0"
-                elif waistPerimeter < 0.4 or waistPerimeter > 2.0:
-                    errors["waistPerimeter"] = "Debe estar entre 0.4 y 2.0 metros"
+            # Perímetro de cintura (cm)
+            if waistPerimeter < 0 or waistPerimeter > 200:
+                errors["waistPerimeter"] = "Debe estar entre 0 y 200 cm"
 
-            # Envergadura (opcional)
-            if isinstance(wingspan, (int, float)):
-                if wingspan <= 0:
-                    errors["wingspan"] = "Debe ser mayor a 0"
-                elif wingspan < 0.3 or wingspan > 2.5:
-                    errors["wingspan"] = "Debe estar entre 0.3 y 2.5 metros"
+            # Envergadura (cm)
+            if wingspan < 0 or wingspan > 250:
+                errors["wingspan"] = "Debe estar entre 0 y 250 cm"
 
             # 5. Retornar errores si existen
             if errors:
-                return {
-                    "code": 400,
-                    "status": "error",
-                    "msg": "Error de validación",
-                    "errors": errors,
-                    "data": None,
-                }
+                return error_response(msg="Error de validación", data=errors, code=400)
 
             # 6. Buscar participante
             participant = Participant.query.filter_by(
@@ -136,13 +129,11 @@ class AssessmentController:
             ).first()
 
             if not participant:
-                return {
-                    "code": 400,
-                    "status": "error",
-                    "msg": "Error de validación",
-                    "errors": {"participant_external_id": "Participante no encontrado"},
-                    "data": None,
-                }
+                return error_response(
+                    msg="Error de validación",
+                    data={"participant_external_id": "Participante no encontrado"},
+                    code=400,
+                )
 
             # 7. Calcular IMC
             bmi = self.calculateBMI(weight, height)
@@ -172,26 +163,20 @@ class AssessmentController:
 
             db.session.commit()
 
-            return {
-                "code": 200,
-                "status": "ok",
-                "msg": "Evaluación registrada exitosamente",
-                "data": {
+            return success_response(
+                msg="Evaluación registrada exitosamente",
+                data={
                     "external_id": assessment.external_id,
                     "participant_external_id": participant.external_id,
                     "bmi": assessment.bmi,
                     "status": assessment.status,
                 },
-            }
+                code=200,
+            )
 
         except Exception as e:
             db.session.rollback()
-            return {
-                "code": 500,
-                "status": "error",
-                "msg": f"Internal error: {str(e)}",
-                "data": None,
-            }
+            return error_response(msg=f"Error interno del servidor: {str(e)}", code=500)
 
     def update(self, external_id, data):
         try:
@@ -233,7 +218,11 @@ class AssessmentController:
             ).first()
 
             if not participant:
-                return error_response(msg="Participante no encontrado", code=404)
+                return error_response(
+                    msg="Error de validación",
+                    data={"participant_external_id": "Participante no encontrado"},
+                    code=400,
+                )
 
             assessments = (
                 Assessment.query.filter_by(participant_id=participant.id)
@@ -269,7 +258,7 @@ class AssessmentController:
             )
 
         except Exception as e:
-            return error_response(msg=str(e), code=500)
+            return error_response(msg=f"Error interno del servidor: {str(e)}", code=500)
 
     def get_bmi_distribution(self):
         try:
@@ -291,12 +280,9 @@ class AssessmentController:
                 {"label": label, "value": data_map[label]} for label in labels
             ]
 
-            return {
-                "code": 200,
-                "status": "ok",
-                "msg": "Distribución por estado nutricional",
-                "data": chart_data,
-            }
+            return success_response(
+                msg="Distribución por estado nutricional", data=chart_data, code=200
+            )
 
         except Exception as e:
-            return {"code": 500, "status": "error", "msg": str(e), "data": None}
+            return error_response(msg=f"Error interno del servidor: {str(e)}", code=500)
