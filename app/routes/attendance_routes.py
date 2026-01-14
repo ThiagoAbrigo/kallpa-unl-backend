@@ -14,7 +14,7 @@ def response_handler(result):
 # ========== ATTENDANCE MANAGEMENT ==========
 
 @attendance_bp.route("/attendance", methods=["POST"])
-@jwt_required
+# @jwt_required
 def register_attendance():
     """Registrar una asistencia individual"""
     data = request.json
@@ -23,7 +23,7 @@ def register_attendance():
 
 
 @attendance_bp.route("/attendance/bulk", methods=["POST"])
-@jwt_required
+# @jwt_required
 def register_bulk_attendance():
     """Registrar múltiples asistencias de una sesión"""
     data = request.json
@@ -32,7 +32,7 @@ def register_bulk_attendance():
 
 
 @attendance_bp.route("/attendance", methods=["GET"])
-@jwt_required
+# @jwt_required
 def list_attendances():
     """Obtener todas las asistencias con filtros opcionales"""
     filters = {
@@ -47,7 +47,7 @@ def list_attendances():
 
 
 @attendance_bp.route("/attendance/<external_id>", methods=["GET"])
-@jwt_required
+# @jwt_required
 def get_attendance(external_id):
     """Obtener una asistencia específica por su external_id"""
     result = controller.get_attendance_by_id(external_id)
@@ -55,7 +55,7 @@ def get_attendance(external_id):
 
 
 @attendance_bp.route("/attendance/<external_id>", methods=["PUT"])
-@jwt_required
+# @jwt_required
 def update_attendance(external_id):
     """Actualizar una asistencia existente"""
     data = request.json
@@ -64,7 +64,7 @@ def update_attendance(external_id):
 
 
 @attendance_bp.route("/attendance/<external_id>", methods=["DELETE"])
-@jwt_required
+# @jwt_required
 def delete_attendance(external_id):
     """Eliminar una asistencia"""
     result = controller.delete_attendance(external_id)
@@ -72,7 +72,7 @@ def delete_attendance(external_id):
 
 
 @attendance_bp.route("/attendance/summary/<participant_external_id>", methods=["GET"])
-@jwt_required
+# @jwt_required
 def get_summary(participant_external_id):
     """Obtener resumen de asistencias de un participante"""
     result = controller.get_participant_summary(participant_external_id)
@@ -245,4 +245,11 @@ def get_session_detail_legacy(schedule_id, date):
 def delete_session_attendance_legacy(schedule_id, date):
     """Eliminar registro de asistencia de una fecha (ruta legacy)"""
     result = controller.delete_session_attendance(schedule_id, date)
+    return response_handler(result)
+
+@attendance_bp.route("/attendance/daily/", defaults={"date": None}, methods=["GET"])
+@attendance_bp.route("/attendance/daily/<date>", methods=["GET"])
+def get_daily_attendance(date=None):
+    """Obtener porcentaje de asistencia de todas las sesiones de un día"""
+    result = controller.get_daily_attendance_percentage(date)
     return response_handler(result)

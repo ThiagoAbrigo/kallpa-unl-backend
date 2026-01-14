@@ -753,15 +753,58 @@ class AttendanceController:
             db.session.rollback()
             return error_response(f"Error interno: {str(e)}")
 
-    def calculate_attendance_average(self, attendances):
-        """Calcula el promedio de asistencia de una lista de registros"""
-        if not attendances or len(attendances) == 0:
-            return 0
-        
-        total = len(attendances)
-        present_count = sum(
-            1 for a in attendances 
-            if a.get("status", "").lower() in ["present", "presente"]
-        )
-        
-        return round((present_count / total) * 100, 2) if total > 0 else 0
+    def get_daily_attendance_percentage(self, date_str=None):
+        """Obtener la sesión con el porcentaje de asistencia más bajo del último día o fecha especificada"""
+        try:
+            from datetime import date as date_class
+
+            # Si no se pasa fecha, buscamos la última fecha con registros
+            if date_str:
+                fecha = date_str
+            else:
+                # Traer la última fecha registrada en Attendance
+                last_attendance = Attendance.query.order_by(Attendance.date.desc()).first()
+                if last_attendance:
+                    fecha = last_attendance.date
+                else:
+                    fecha = date_class.today().isoformat()  # fallback si no hay registros
+
+            # Traer todas las sesiones activas
+            schedules = Schedule.query.filter_by(status="active").all()
+            result = []
+
+            for s in schedules:
+                total_attendances = Attendance.query.filter_by(
+                    schedule_id=s.id, date=fecha
+                ).count()
+                
+                present_count = Attendance.query.filter_by(
+                    schedule_id=s.id, date=fecha, status=Attendance.Status.PRESENT
+                ).count()
+
+                percentage = round((present_count / total_attendances) * 100, 2) if total_attendances > 0 else 0
+
+                result.append(
+                    {
+                        "schedule_external_id": s.external_id,
+                        "schedule_name": s.name,
+                        "date": fecha,
+                        "total_registered": total_attendances,
+                        "present": present_count,
+                        "attendance_percentage": percentage,
+                    }
+                )
+
+            if not result:
+                return success_response(msg=f"No hay sesiones activas para el día {fecha}", data=[])
+
+            # Seleccionar la sesión con el porcentaje más bajo
+            lowest_attendance = min(result, key=lambda x: x["attendance_percentage"])
+
+            return success_response(
+                msg=f"Sesión con el porcentaje de asistencia más bajo del día {fecha}",
+                data=[lowest_attendance]
+            )
+
+        except Exception as e:
+            return error_response(f"Error interno: {str(e)}")
