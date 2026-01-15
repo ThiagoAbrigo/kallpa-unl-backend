@@ -4,14 +4,14 @@ from app.controllers.usercontroller import UserController
 from app.controllers.auth_controller import AuthController
 
 class TestUserController(unittest.TestCase):
-    # Comando para ejecutar las pruebas individualmente:
-    # cd .. && python3 -m unittest tests/pruebas_josep.py -v
+  
+    
 
     def setUp(self):
-        # Instanciamos los controladores dentro de cada test o patch para evitar problemas de contexto
+        # Instanciamos los controladores dentro de cada test 
         pass
 
-    # ========== AUTH TESTS ==========
+
     @patch("app.controllers.auth_controller.AuthService")
     def test_tc_01_login_success(self, mock_auth_service):
         """TC-01: Inicio de Sesión - Verifica ingreso exitoso con credenciales correctas"""
