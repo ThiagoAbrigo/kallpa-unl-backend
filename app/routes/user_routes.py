@@ -25,7 +25,8 @@ def listar_users():
 @user_bp.route("/users/<string:external_id>/status", methods=["PUT"])
 def cambiar_estado(external_id):
     data = request.json
-    return response_handler(controller.change_status(external_id, data))
+    new_status = data.get("status") if data else None
+    return response_handler(controller.change_status(external_id, new_status))
 
 @user_bp.route("/users/search-java", methods=["POST"])
 def buscar_usuario_java():
