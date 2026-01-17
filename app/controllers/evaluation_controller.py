@@ -40,67 +40,106 @@ class EvaluationController:
     def register(self, data):
         try:
             if not isinstance(data, dict):
-                return error_response("Datos inválidos")
+                return error_response("Datos inválidos", code=400)
 
-            errors = {}
+            name_input = data.get("name", "").strip() if data.get("name") else ""
+            freq_input = data.get("frequency_months")
+            description_input = data.get("description", "").strip() if data.get("description") else None
+            exercises_input = data.get("exercises", [])
 
-            name = data.get("name", "").strip()
-            if not name:
-                errors["name"] = "Campo requerido"
-            elif Test.query.filter_by(name=name).first():
-                errors["name"] = "El test con ese nombre ya existe"
+            name_normalized = name_input.lower()
 
-            freq = data.get("frequency_months")
-            if freq is None:
-                errors["frequency_months"] = "Campo requerido"
-            elif not isinstance(freq, int):
-                errors["frequency_months"] = "La frecuencia debe ser un número entero"
-            elif isinstance(freq, int) and (freq < 1 or freq > 12):
-                errors["frequency_months"] = (
-                    "La frecuencia debe estar entre 1 y 12 meses"
+            validation_errors = {}
+
+            if not name_input:
+                validation_errors["name"] = "Campo requerido"
+            elif Test.query.filter(db.func.lower(Test.name) == name_normalized).first():
+                validation_errors["name"] = "El test con ese nombre ya existe"
+
+            if freq_input is None:
+                validation_errors["frequency_months"] = "Campo requerido"
+            elif not isinstance(freq_input, int):
+                validation_errors["frequency_months"] = "La frecuencia debe ser un número entero"
+            elif freq_input < 1 or freq_input > 12:
+                validation_errors["frequency_months"] = "La frecuencia debe estar entre 1 y 12 meses"
+
+            if not exercises_input:
+                validation_errors["exercises"] = "Se requiere al menos un ejercicio"
+            else:
+                for i, ex in enumerate(exercises_input):
+                    ex_name = ex.get("name", "").strip() if ex.get("name") else ""
+                    ex_unit = ex.get("unit", "").strip() if ex.get("unit") else ""
+
+                    if not ex_name:
+                        validation_errors[f"exercises[{i}].name"] = "Campo requerido"
+                    if not ex_unit:
+                        validation_errors[f"exercises[{i}].unit"] = "Campo requerido"
+
+            if validation_errors:
+                error_data = {
+                    "test_external_id": None,
+                    "name": name_input if name_input else None,
+                    "frequency_months": freq_input,
+                    "description": description_input,
+                    "exercises": [
+                        {
+                            "name": ex.get("name", "").strip() if ex.get("name") else None,
+                            "unit": ex.get("unit", "").strip() if ex.get("unit") else None,
+                        }
+                        for ex in exercises_input
+                    ] if exercises_input else [],
+                    "validation_errors": validation_errors,
+                }
+                return error_response(
+                    msg="Error de validación",
+                    data=error_data,
+                    code=400
                 )
 
-            exercises = data.get("exercises", [])
-            if not exercises:
-                errors["exercises"] = "Se requiere al menos un ejercicio"
-            else:
-                for i, ex in enumerate(exercises):
-                    ex_name = ex.get("name", "").strip()
-                    unit = ex.get("unit", "").strip()
-                    if not ex_name or not unit:
-                        errors["exercises"] = "Complete los campos de los ejercicios"
-                        break
-
-            if errors:
-                return error_response(errors)
-
             test = Test(
-                name=name,
-                description=data.get("description"),
-                frequency_months=freq,
+                name=name_normalized,
+                description=description_input,
+                frequency_months=freq_input,
             )
             db.session.add(test)
             db.session.flush()
 
-            for ex in exercises:
-                db.session.add(
-                    TestExercise(
-                        test_id=test.id,
-                        name=ex.get("name").strip(),
-                        unit=ex.get("unit").strip(),
-                    )
+            exercises_created = []
+            for ex in exercises_input:
+                exercise = TestExercise(
+                    test_id=test.id,
+                    name=ex.get("name").strip(),
+                    unit=ex.get("unit").strip(),
                 )
+                db.session.add(exercise)
+                exercises_created.append({
+                    "name": exercise.name,
+                    "unit": exercise.unit,
+                })
 
             db.session.commit()
 
+            success_data = {
+                "test_external_id": test.external_id,
+                "name": test.name,
+                "frequency_months": test.frequency_months,
+                "description": test.description,
+                "exercises": exercises_created,
+            }
+
             return success_response(
                 msg="Test creado correctamente",
-                data={"test_external_id": test.external_id},
+                data=success_data,
+                code=200
             )
 
         except Exception as e:
             db.session.rollback()
-            return error_response("Error interno del servidor", 500)
+            return error_response(
+                msg="Error interno del servidor",
+                data=None,
+                code=500
+            )
 
     def apply_test(self, data):
         try:
