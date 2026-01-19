@@ -29,6 +29,7 @@ class EvaluationController:
                         "description": test.description,
                         "frequency_months": test.frequency_months,
                         "exercises": exercises_data,
+                        "status": test.status,
                     }
                 )
 
@@ -44,7 +45,9 @@ class EvaluationController:
 
             name_input = data.get("name", "").strip() if data.get("name") else ""
             freq_input = data.get("frequency_months")
-            description_input = data.get("description", "").strip() if data.get("description") else None
+            description_input = (
+                data.get("description", "").strip() if data.get("description") else None
+            )
             exercises_input = data.get("exercises", [])
 
             name_normalized = name_input.lower()
@@ -59,9 +62,13 @@ class EvaluationController:
             if freq_input is None:
                 validation_errors["frequency_months"] = "Campo requerido"
             elif not isinstance(freq_input, int):
-                validation_errors["frequency_months"] = "La frecuencia debe ser un número entero"
+                validation_errors["frequency_months"] = (
+                    "La frecuencia debe ser un número entero"
+                )
             elif freq_input < 1 or freq_input > 12:
-                validation_errors["frequency_months"] = "La frecuencia debe estar entre 1 y 12 meses"
+                validation_errors["frequency_months"] = (
+                    "La frecuencia debe estar entre 1 y 12 meses"
+                )
 
             if not exercises_input:
                 validation_errors["exercises"] = "Se requiere al menos un ejercicio"
@@ -81,19 +88,29 @@ class EvaluationController:
                     "name": name_input if name_input else None,
                     "frequency_months": freq_input,
                     "description": description_input,
-                    "exercises": [
-                        {
-                            "name": ex.get("name", "").strip() if ex.get("name") else None,
-                            "unit": ex.get("unit", "").strip() if ex.get("unit") else None,
-                        }
-                        for ex in exercises_input
-                    ] if exercises_input else [],
+                    "exercises": (
+                        [
+                            {
+                                "name": (
+                                    ex.get("name", "").strip()
+                                    if ex.get("name")
+                                    else None
+                                ),
+                                "unit": (
+                                    ex.get("unit", "").strip()
+                                    if ex.get("unit")
+                                    else None
+                                ),
+                            }
+                            for ex in exercises_input
+                        ]
+                        if exercises_input
+                        else []
+                    ),
                     "validation_errors": validation_errors,
                 }
                 return error_response(
-                    msg="Error de validación",
-                    data=error_data,
-                    code=400
+                    msg="Error de validación", data=error_data, code=400
                 )
 
             test = Test(
@@ -112,10 +129,12 @@ class EvaluationController:
                     unit=ex.get("unit").strip(),
                 )
                 db.session.add(exercise)
-                exercises_created.append({
-                    "name": exercise.name,
-                    "unit": exercise.unit,
-                })
+                exercises_created.append(
+                    {
+                        "name": exercise.name,
+                        "unit": exercise.unit,
+                    }
+                )
 
             db.session.commit()
 
@@ -128,18 +147,12 @@ class EvaluationController:
             }
 
             return success_response(
-                msg="Test creado correctamente",
-                data=success_data,
-                code=200
+                msg="Test creado correctamente", data=success_data, code=200
             )
 
         except Exception as e:
             db.session.rollback()
-            return error_response(
-                msg="Error interno del servidor",
-                data=None,
-                code=500
-            )
+            return error_response(msg="Error interno del servidor", data=None, code=500)
 
     def apply_test(self, data):
         try:
@@ -239,7 +252,7 @@ class EvaluationController:
         except Exception as e:
             db.session.rollback()
             return error_response(f"Internal error: {str(e)}", 500)
-    
+
     def get_participant_progress(self, participant_external_id):
         try:
             participant = Participant.query.filter_by(
@@ -250,8 +263,7 @@ class EvaluationController:
                 return error_response("Participante no encontrado")
 
             evaluations = (
-                Evaluation.query
-                .filter_by(participant_id=participant.id)
+                Evaluation.query.filter_by(participant_id=participant.id)
                 .order_by(Evaluation.date.asc())
                 .all()
             )
@@ -259,37 +271,33 @@ class EvaluationController:
             progress_data = []
 
             for eval in evaluations:
-                results = EvaluationResult.query.filter_by(
-                    evaluation_id=eval.id
-                ).all()
+                results = EvaluationResult.query.filter_by(evaluation_id=eval.id).all()
 
-                result_dict = {
-                    r.exercise.name: r.value
-                    for r in results
-                }
+                result_dict = {r.exercise.name: r.value for r in results}
 
                 total = sum(result_dict.values()) if result_dict else 0
 
-                progress_data.append({
-                    "evaluation_external_id": eval.external_id,
-                    "date": eval.date.strftime("%Y-%m-%d") if eval.date else None,
-                    "test_name": eval.test.name,   # 👈 AQUÍ
-                    "results": result_dict,
-                    "total": total,
-                    "general_observations": eval.general_observations
-                })
+                progress_data.append(
+                    {
+                        "evaluation_external_id": eval.external_id,
+                        "date": eval.date.strftime("%Y-%m-%d") if eval.date else None,
+                        "test_name": eval.test.name,  # 👈 AQUÍ
+                        "results": result_dict,
+                        "total": total,
+                        "general_observations": eval.general_observations,
+                    }
+                )
 
             return success_response(
                 msg="Progreso obtenido correctamente",
                 data={
                     "participant_name": participant.firstName,
-                    "progress": progress_data
-                }
+                    "progress": progress_data,
+                },
             )
 
         except Exception as e:
             return error_response(f"Internal error: {str(e)}", 500)
-
 
     def list_tests_for_participant(self, participant_external_id):
         try:
@@ -333,3 +341,25 @@ class EvaluationController:
 
         except Exception as e:
             return error_response(f"Internal error: {str(e)}", 500)
+
+    def get_by_external_id(self, external_id):
+        try:
+            test = Test.query.filter_by(external_id=external_id).first()
+            if not test:
+                return error_response("Test no encontrado", 404)
+
+            exercises = TestExercise.query.filter_by(test_id=test.id).all()
+            exercises_data = [{"name": ex.name, "unit": ex.unit} for ex in exercises]
+
+            data = {
+                "external_id": test.external_id,
+                "name": test.name,
+                "description": test.description,
+                "frequency_months": test.frequency_months,
+                "exercises": exercises_data,
+                "status": test.status,
+            }
+
+            return success_response(msg="Detalle del test obtenido", data=data)
+        except Exception as e:
+            return error_response(f"Error al obtener test: {str(e)}", 500)

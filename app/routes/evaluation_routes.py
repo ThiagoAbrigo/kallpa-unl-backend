@@ -13,7 +13,7 @@ def response_handler(result):
 
 
 @evaluation_bp.route("/list-test", methods=["GET"])
-@jwt_required
+# @jwt_required
 def list_test():
     return response_handler(controller.list())
 
@@ -46,3 +46,13 @@ def list_tests_for_participant_endpoint():
     return response_handler(
         controller.list_tests_for_participant(participant_external_id)
     )
+
+@evaluation_bp.route("/get-test/<external_id>", methods=["GET"])
+def get_test_detail(external_id):
+    return response_handler(controller.get_by_external_id(external_id))
+
+# @evaluation_bp.route("/update-test", methods=["PUT"])
+# def update_test():
+#     data = request.json
+#     # El controlador debe recibir el external_id dentro de 'data' para saber qué editar
+#     return response_handler(controller.update(data))
