@@ -239,152 +239,57 @@ class EvaluationController:
         except Exception as e:
             db.session.rollback()
             return error_response(f"Internal error: {str(e)}", 500)
-
-    def history(
-        self,
-        participant_external_id,
-        test_external_id,
-        start_date,
-        end_date,
-    ):
+    
+    def get_participant_progress(self, participant_external_id):
         try:
-            if not participant_external_id:
-                return error_response("Debe seleccionar un participante", 400)
-
-            if not test_external_id:
-                return error_response("Debe seleccionar un test", 400)
-
-            if not start_date or not end_date:
-                return error_response("Debe indicar fecha inicio y fecha fin", 400)
-
-            try:
-                start_date = datetime.fromisoformat(start_date).date()
-                end_date = datetime.fromisoformat(end_date).date()
-            except ValueError:
-                return error_response("Formato de fecha inválido (YYYY-MM-DD)", 400)
-
-            if start_date > end_date:
-                return error_response(
-                    "La fecha inicio no puede ser mayor a la fecha fin", 400
-                )
-
             participant = Participant.query.filter_by(
                 external_id=participant_external_id
             ).first()
 
             if not participant:
-                return error_response("Participante no encontrado", 404)
-
-            test = Test.query.filter_by(external_id=test_external_id).first()
-
-            if not test:
-                return error_response("Test no encontrado", 404)
+                return error_response("Participante no encontrado")
 
             evaluations = (
-                Evaluation.query.filter(
-                    Evaluation.participant_id == participant.id,
-                    Evaluation.test_id == test.id,
-                    Evaluation.date >= start_date,
-                    Evaluation.date <= end_date,
-                )
+                Evaluation.query
+                .filter_by(participant_id=participant.id)
                 .order_by(Evaluation.date.asc())
                 .all()
             )
 
-            if not evaluations:
-                return success_response(
-                    msg="No hay evaluaciones en el periodo seleccionado",
-                    data={
-                        "participant_external_id": participant_external_id,
-                        "test_external_id": test_external_id,
-                        "start_date": start_date.isoformat(),
-                        "end_date": end_date.isoformat(),
-                        "exercises": {},
-                    },
-                )
+            progress_data = []
 
-            history = {}
+            for eval in evaluations:
+                results = EvaluationResult.query.filter_by(
+                    evaluation_id=eval.id
+                ).all()
 
-            for ev in evaluations:
-                for r in ev.results:
-                    if not r.exercise:
-                        continue
-
-                    ex_id = r.exercise.external_id
-
-                    if ex_id not in history:
-                        history[ex_id] = {
-                            "exercise_name": r.exercise.name,
-                            "unit": r.exercise.unit,
-                            "timeline": [],
-                        }
-
-                    history[ex_id]["timeline"].append(
-                        {
-                            "date": ev.date.isoformat(),
-                            "value": r.value,
-                        }
-                    )
-
-            for ex in history.values():
-                values = [p["value"] for p in ex["timeline"]]
-
-                if len(values) < 2:
-                    ex["stats"] = {
-                        "count": len(values),
-                        "average": values[0] if values else None,
-                        "min": values[0] if values else None,
-                        "max": values[0] if values else None,
-                        "first_value": values[0] if values else None,
-                        "last_value": values[0] if values else None,
-                        "delta": None,
-                    }
-
-                    ex["trend"] = {
-                        "status": "Datos insuficientes",
-                        "description": "Se requieren al menos 2 evaluaciones",
-                    }
-                    continue
-
-                first = values[0]
-                last = values[-1]
-                delta = round(last - first, 2)
-
-                if delta > 0:
-                    trend_status = "Mejorando"
-                elif delta < 0:
-                    trend_status = "Disminuyendo"
-                else:
-                    trend_status = "Estable"
-
-                ex["stats"] = {
-                    "count": len(values),
-                    "average": round(sum(values) / len(values), 2),
-                    "min": min(values),
-                    "max": max(values),
-                    "first_value": first,
-                    "last_value": last,
-                    "delta": delta,
+                result_dict = {
+                    r.exercise.name: r.value
+                    for r in results
                 }
 
-                ex["trend"] = {
-                    "status": trend_status,
-                    "description": f"Inicio: {first} → Fin: {last} ({delta})",
-                }
+                total = sum(result_dict.values()) if result_dict else 0
+
+                progress_data.append({
+                    "evaluation_external_id": eval.external_id,
+                    "date": eval.date.strftime("%Y-%m-%d") if eval.date else None,
+                    "test_name": eval.test.name,   # 👈 AQUÍ
+                    "results": result_dict,
+                    "total": total,
+                    "general_observations": eval.general_observations
+                })
 
             return success_response(
-                msg="Historial de test obtenido correctamente",
+                msg="Progreso obtenido correctamente",
                 data={
-                    "participant_external_id": participant_external_id,
-                    "test_external_id": test_external_id,
-                    "start_date": start_date.isoformat(),
-                    "end_date": end_date.isoformat(),
-                    "exercises": history,
-                },
+                    "participant_name": participant.firstName,
+                    "progress": progress_data
+                }
             )
 
         except Exception as e:
             return error_response(f"Internal error: {str(e)}", 500)
+
 
     def list_tests_for_participant(self, participant_external_id):
         try:
