@@ -37,7 +37,6 @@ class AssessmentController:
                     "weight": a.weight,
                     "height": a.height,
                     "waistPerimeter": a.waistPerimeter,
-                    "wingspan": a.wingspan,
                     "bmi": a.bmi,
                     "status": a.status,
                 }
@@ -60,7 +59,9 @@ class AssessmentController:
             height = data.get("height")
             date = data.get("date")
             waistPerimeter = data.get("waistPerimeter")
-            wingspan = data.get("wingspan")
+            armPerimeter = data.get("armPerimeter")
+            legPerimeter = data.get("legPerimeter")
+            calfPerimeter = data.get("calfPerimeter")
 
             # 2. Validar existencia (obligatorios)
             if not participant_external_id or not str(participant_external_id).strip():
@@ -78,8 +79,14 @@ class AssessmentController:
             if waistPerimeter is None:
                 waistPerimeter = 0
 
-            if wingspan is None:
-                wingspan = 0
+            if armPerimeter is None:
+                armPerimeter = 0
+
+            if legPerimeter is None:
+                legPerimeter = 0
+
+            if calfPerimeter is None:
+                calfPerimeter = 0
 
             # 3. Validar tipos (letras, strings, etc.)
             if weight is not None and not isinstance(weight, (int, float)):
@@ -88,13 +95,14 @@ class AssessmentController:
             if height is not None and not isinstance(height, (int, float)):
                 errors["height"] = "La altura debe ser numérica"
 
-            if waistPerimeter is not None and not isinstance(
-                waistPerimeter, (int, float)
-            ):
-                errors["waistPerimeter"] = "Debe ser numérico"
-
-            if wingspan is not None and not isinstance(wingspan, (int, float)):
-                errors["wingspan"] = "Debe ser numérico"
+            for field, value, label in [
+                ("waistPerimeter", waistPerimeter, "waistPerimeter"),
+                ("armPerimeter", armPerimeter, "armPerimeter"),
+                ("legPerimeter", legPerimeter, "legPerimeter"),
+                ("calfPerimeter", calfPerimeter, "calfPerimeter"),
+            ]:
+                if value is not None and not isinstance(value, (int, float)):
+                    errors[field] = "Debe ser numérico"
 
             # 4. Validar rangos antropométricos
             # =========================
@@ -115,13 +123,19 @@ class AssessmentController:
             if waistPerimeter < 0 or waistPerimeter > 200:
                 errors["waistPerimeter"] = "Debe estar entre 0 y 200 cm"
 
-            # Envergadura (cm)
-            if wingspan < 0 or wingspan > 250:
-                errors["wingspan"] = "Debe estar entre 0 y 250 cm"
+            if armPerimeter < 0 or armPerimeter > 80:
+                errors["armPerimeter"] = "Debe estar entre 10 y 80 cm"
 
+            if legPerimeter < 0 or legPerimeter > 120:
+                errors["legPerimeter"] = "Debe estar entre 20 y 120 cm"
+
+            if calfPerimeter < 0 or calfPerimeter > 70:
+                errors["calfPerimeter"] = "Debe estar entre 15 y 70 cm"
             # 5. Retornar errores si existen
             if errors:
-                return error_response(msg="Error de validación", data=errors, code=400)
+                return error_response(
+                    msg="Error de validación", errors=errors, code=400
+                )
 
             # 6. Buscar participante
             participant = Participant.query.filter_by(
@@ -131,7 +145,7 @@ class AssessmentController:
             if not participant:
                 return error_response(
                     msg="Error de validación",
-                    data={"participant_external_id": "Participante no encontrado"},
+                    errors={"participant_external_id": "Participante no encontrado"},
                     code=400,
                 )
 
@@ -148,9 +162,11 @@ class AssessmentController:
                 weight=weight,
                 height=height,
                 waistPerimeter=waistPerimeter,
-                wingspan=wingspan,
                 bmi=bmi,
                 status=status,
+                armPerimeter=armPerimeter,
+                legPerimeter=legPerimeter,
+                calfPerimeter=calfPerimeter,
             )
 
             db.session.add(assessment)
@@ -178,39 +194,6 @@ class AssessmentController:
             db.session.rollback()
             return error_response(msg=f"Error interno del servidor: {str(e)}", code=500)
 
-    def update(self, external_id, data):
-        try:
-            assessment = Assessment.query.filter_by(external_id=external_id).first()
-
-            if not assessment:
-                return error_response("Evaluación no encontrada")
-
-            assessment.date = data.get("date", assessment.date)
-            assessment.weight = data.get("weight", assessment.weight)
-            assessment.height = data.get("height", assessment.height)
-            assessment.waistPerimeter = data.get(
-                "waistPerimeter", assessment.waistPerimeter
-            )
-            assessment.wingspan = data.get("wingspan", assessment.wingspan)
-
-            # Recalcular IMC
-            assessment.bmi = self.calculateBMI(assessment.weight, assessment.height)
-
-            db.session.commit()
-
-            return success_response(
-                msg="Evaluación actualizada correctamente",
-                data={
-                    "external_id": assessment.external_id,
-                    "participant_external_id": assessment.participant.external_id,
-                    "bmi": assessment.bmi,
-                },
-            )
-
-        except Exception as e:
-            db.session.rollback()
-            return error_response(msg=f"Error interno del servidor: {str(e)}", code=500)
-
     def get_participants_external_id(self, participant_external_id):
         try:
             participant = Participant.query.filter_by(
@@ -220,7 +203,7 @@ class AssessmentController:
             if not participant:
                 return error_response(
                     msg="Error de validación",
-                    data={"participant_external_id": "Participante no encontrado"},
+                    errors={"participant_external_id": "Participante no encontrado"},
                     code=400,
                 )
 
@@ -237,7 +220,9 @@ class AssessmentController:
                     "weight": a.weight,
                     "height": a.height,
                     "waistPerimeter": a.waistPerimeter,
-                    "wingspan": a.wingspan,
+                    "armPerimeter": a.armPerimeter,
+                    "legPerimeter": a.legPerimeter,
+                    "calfPerimeter": a.calfPerimeter,
                     "bmi": a.bmi,
                     "status": a.status,
                 }

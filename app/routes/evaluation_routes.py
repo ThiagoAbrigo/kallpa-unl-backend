@@ -26,45 +26,18 @@ def register_evaluation():
 
 
 @evaluation_bp.route("/apply_test", methods=["POST"])
-@roles_required("DOCENTE", "PASANTE")
+# @roles_required("DOCENTE", "PASANTE")
 def apply_test():
     data = request.json
     return response_handler(controller.apply_test(data))
 
-
-# @evaluation_bp.route("/history", methods=["GET"])
-# def history():
-#     participant_external_id = request.args.get("participant_external_id")
-#     test_external_id = request.args.get("test_external_id")
-
-#     try:
-#         months = int(request.args.get("months", 6))
-#     except (ValueError, TypeError):
-#         months = 6
-
-#     return response_handler(
-#         controller.history(
-#             participant_external_id=participant_external_id,
-#             test_external_id=test_external_id,
-#             months=months,
-#         )
-#     )
-
-@evaluation_bp.route("/history", methods=["GET"])
-def history():
+@evaluation_bp.route("/participant-progress", methods=["GET"])
+def participant_progress():
     participant_external_id = request.args.get("participant_external_id")
-    test_external_id = request.args.get("test_external_id")
-    start_date = request.args.get("start_date")
-    end_date = request.args.get("end_date")
-
     return response_handler(
-        controller.history(
-            participant_external_id=participant_external_id,
-            test_external_id=test_external_id,
-            start_date=start_date,
-            end_date=end_date,
-        )
+        controller.get_participant_progress(participant_external_id)
     )
+
 
 
 @evaluation_bp.route("/list-tests-participant", methods=["GET"])
