@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from sqlalchemy.sql.visitors import ExternallyTraversible
 from app.controllers.evaluation_controller import EvaluationController
 from app.utils.roles_required import roles_required
 from app.utils.jwt_required import jwt_required
@@ -51,8 +52,11 @@ def list_tests_for_participant_endpoint():
 def get_test_detail(external_id):
     return response_handler(controller.get_by_external_id(external_id))
 
-# @evaluation_bp.route("/update-test", methods=["PUT"])
-# def update_test():
-#     data = request.json
-#     # El controlador debe recibir el external_id dentro de 'data' para saber qué editar
-#     return response_handler(controller.update(data))
+@evaluation_bp.route("/update-test", methods=["PUT"])
+def update_test():
+    data = request.json
+    return response_handler(controller.update(data))
+
+@evaluation_bp.route("/delete-test/<external_id>", methods=["DELETE"])
+def delete_test(external_id):
+    return response_handler(controller.delete(external_id))

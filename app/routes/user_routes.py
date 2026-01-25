@@ -100,6 +100,13 @@ def update_user_profile():
         print(f"[ERROR] update_user_profile: {str(e)}")
         return jsonify({"status": "error", "msg": f"Error: {str(e)}", "code": 500}), 500
 
+@user_bp.route("/participants/<string:external_id>", methods=["PUT"])
+def update_participant(external_id):
+    """Actualiza la información básica de un participante"""
+    data = request.get_json(silent=True) or {}
+    return response_handler(controller.update_participant(external_id, data))
+
+
 @user_bp.route("/participants/active/count", methods=["GET"])
 def get_active_participants_count():
     return response_handler(controller.get_active_participants_count())

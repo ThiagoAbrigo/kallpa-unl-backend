@@ -851,3 +851,157 @@ class UserController:
 
         except Exception as e:
             return error_response("Error interno del servidor", code=500)
+
+    def update_participant(self, external_id, data):
+        """
+        Actualiza los datos básicos de un participante.
+        Campos editables: firstName, lastName, phone, email, address, age, dni
+        """
+        import re
+
+        try:
+            # Buscar participante
+            participant = Participant.query.filter_by(external_id=external_id).first()
+            if not participant:
+                return error_response("Participante no encontrado", 404)
+
+            errors = {}
+
+            # ========== VALIDAR FIRSTNAME ==========
+            if "firstName" in data:
+                firstName = str(data["firstName"]).strip()
+                name_pattern = r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+$'
+                if len(firstName) < 2:
+                    errors["firstName"] = "Nombre debe tener al menos 2 caracteres"
+                elif len(firstName) > 50:
+                    errors["firstName"] = "Nombre no puede tener más de 50 caracteres"
+                elif not re.match(name_pattern, firstName):
+                    errors["firstName"] = "Nombre solo puede contener letras (sin espacios)"
+
+            # ========== VALIDAR LASTNAME ==========
+            if "lastName" in data:
+                lastName = str(data["lastName"]).strip()
+                name_pattern = r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+$'
+                if len(lastName) < 2:
+                    errors["lastName"] = "Apellido debe tener al menos 2 caracteres"
+                elif len(lastName) > 50:
+                    errors["lastName"] = "Apellido no puede tener más de 50 caracteres"
+                elif not re.match(name_pattern, lastName):
+                    errors["lastName"] = "Apellido solo puede contener letras (sin espacios)"
+
+            # ========== VALIDAR PHONE ==========
+            if "phone" in data:
+                phone_str = str(data["phone"]).strip()
+                if phone_str:
+                    if not phone_str.isdigit():
+                        errors["phone"] = "Teléfono debe contener solo números"
+                    elif len(phone_str) != 10:
+                        errors["phone"] = "Teléfono debe tener exactamente 10 dígitos"
+                    elif phone_str == "0000000000":
+                        errors["phone"] = "Teléfono no puede ser solo ceros"
+                    elif phone_str[0] != "0":
+                        errors["phone"] = "Teléfono debe iniciar con 0"
+                    elif self._is_sequential(phone_str):
+                        errors["phone"] = "Teléfono no puede ser un número secuencial"
+
+            # ========== VALIDAR EMAIL ==========
+            if "email" in data:
+                email_str = str(data["email"]).strip()
+                email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+                if not re.match(email_pattern, email_str):
+                    errors["email"] = "Formato de correo electrónico inválido"
+                elif len(email_str) > 100:
+                    errors["email"] = "Email no puede tener más de 100 caracteres"
+                else:
+                    # Verificar unicidad (excluyendo el participante actual)
+                    existing = Participant.query.filter(
+                        Participant.email == email_str,
+                        Participant.id != participant.id
+                    ).first()
+                    if existing:
+                        errors["email"] = "El correo ya está registrado"
+
+            # ========== VALIDAR ADDRESS ==========
+            if "address" in data:
+                address_str = str(data["address"]).strip()
+                if len(address_str) > 200:
+                    errors["address"] = "Dirección no puede tener más de 200 caracteres"
+                dangerous_pattern = r'[<>"\';\{\}]'
+                if re.search(dangerous_pattern, address_str):
+                    errors["address"] = "Dirección contiene caracteres no permitidos"
+
+            # ========== VALIDAR AGE ==========
+            if "age" in data:
+                try:
+                    age_int = int(data["age"])
+                    if age_int < 1:
+                        errors["age"] = "Edad debe ser mayor a 0"
+                    elif age_int > 80:
+                        errors["age"] = "Edad máxima permitida es 80 años"
+                except (ValueError, TypeError):
+                    errors["age"] = "Edad debe ser un número válido"
+
+            # ========== VALIDAR DNI ==========
+            if "dni" in data:
+                dni_str = str(data["dni"]).strip()
+                if not dni_str.isdigit():
+                    errors["dni"] = "DNI debe contener solo números"
+                elif len(dni_str) != 10:
+                    errors["dni"] = "DNI debe tener exactamente 10 dígitos"
+                elif dni_str == "0000000000":
+                    errors["dni"] = "DNI no puede ser solo ceros"
+                elif self._is_sequential(dni_str):
+                    errors["dni"] = "DNI no puede ser un número secuencial"
+                else:
+                    # Verificar unicidad (excluyendo el participante actual)
+                    existing = Participant.query.filter(
+                        Participant.dni == dni_str,
+                        Participant.id != participant.id
+                    ).first()
+                    if existing:
+                        errors["dni"] = "El DNI ya está registrado"
+
+            # Si hay errores, retornarlos
+            if errors:
+                return error_response("Errores de validación", code=400, data=errors)
+
+            # ========== ACTUALIZAR CAMPOS ==========
+            if "firstName" in data:
+                participant.firstName = str(data["firstName"]).strip()
+            if "lastName" in data:
+                participant.lastName = str(data["lastName"]).strip()
+            if "phone" in data:
+                participant.phone = str(data["phone"]).strip()
+            if "email" in data:
+                participant.email = str(data["email"]).strip()
+            if "address" in data:
+                participant.address = str(data["address"]).strip()
+            if "age" in data:
+                participant.age = int(data["age"])
+            if "dni" in data:
+                participant.dni = str(data["dni"]).strip()
+
+            db.session.commit()
+
+            return success_response(
+                msg="Participante actualizado correctamente",
+                data={
+                    "external_id": participant.external_id,
+                    "firstName": participant.firstName,
+                    "lastName": participant.lastName,
+                    "phone": participant.phone,
+                    "email": participant.email,
+                    "address": participant.address,
+                    "age": participant.age,
+                    "dni": participant.dni,
+                    "status": participant.status,
+                    "type": participant.type,
+                    "program": participant.program,
+                },
+            )
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"[UserController] Error actualizando participante: {str(e)}")
+            return error_response(f"Error interno del servidor: {str(e)}", 500)
+
