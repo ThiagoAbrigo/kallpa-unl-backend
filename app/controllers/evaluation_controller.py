@@ -325,13 +325,6 @@ class EvaluationController:
                 return error_response("Test no encontrado")
 
             results = data.get("results", [])
-            if not any(
-                isinstance(r.get("value"), (int, float)) and r.get("value") > 0
-                for r in results
-            ):
-                return error_response(
-                    "Debe ingresar al menos un valor válido para los ejercicios"
-                )
 
             date_str = data.get("date")
             if date_str:
@@ -372,13 +365,13 @@ class EvaluationController:
 
                 used.add(ex_id)
 
-                value = r.get("value")
+                value = r.get("value", 0)
                 if value is None:
-                    return error_response("Debe ingresar un valor para cada ejercicio")
+                    value = 0
 
-                if not isinstance(value, (int, float)) or value <= 0:
+                if not isinstance(value, (int, float)) or value < 0:
                     return error_response(
-                        "Debe ingresar un valor mayor que 0 para cada ejercicio"
+                        "El valor del ejercicio debe ser numérico y mayor o igual a 0"
                     )
 
                 db.session.add(

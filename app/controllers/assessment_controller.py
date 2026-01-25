@@ -237,6 +237,7 @@ class AssessmentController:
                         "firstName": f"{participant.firstName} {participant.lastName}",
                         "dni": participant.dni,
                         "age": participant.age,
+                        "status": participant.status
                     },
                     "assessments": data,
                 },
