@@ -245,30 +245,3 @@ class AssessmentController:
 
         except Exception as e:
             return error_response(msg=f"Error interno del servidor: {str(e)}", code=500)
-
-    def get_bmi_distribution(self):
-        try:
-            results = (
-                db.session.query(Assessment.status, func.count(Assessment.id))
-                .group_by(Assessment.status)
-                .all()
-            )
-
-            labels = ["Bajo peso", "Peso adecuado", "Sobrepeso", "Obesidad"]
-
-            data_map = {label: 0 for label in labels}
-
-            for status, count in results:
-                if status in data_map:
-                    data_map[status] = count
-
-            chart_data = [
-                {"label": label, "value": data_map[label]} for label in labels
-            ]
-
-            return success_response(
-                msg="Distribución por estado nutricional", data=chart_data, code=200
-            )
-
-        except Exception as e:
-            return error_response(msg=f"Error interno del servidor: {str(e)}", code=500)

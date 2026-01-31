@@ -1,8 +1,9 @@
 # app/utils/jwt_required.py
 import jwt
 from functools import wraps
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 
+SESSION_ERROR_MSG = "Tu sesión ha terminado por seguridad. Por favor, vuelve a iniciar sesión para continuar con tus actividades."
 
 def get_jwt_identity():
     """Obtiene el external_id del usuario del token JWT decodificado."""
@@ -22,17 +23,27 @@ def jwt_required(f):
         auth_header = request.headers.get("Authorization")
 
         if not auth_header:
-            return jsonify({"msg": "Token is missing", "code": 401}), 401
+            return jsonify({
+                "msg": "No hay sesión activa. Por favor inicia sesión.",
+                "code": 401
+            }), 401
 
         try:
             parts = auth_header.split()
             if len(parts) != 2 or parts[0].lower() != "bearer":
-                return jsonify({"msg": "Authorization header must be Bearer token", "code": 401}), 401
+                return jsonify({
+                    "msg": SESSION_ERROR_MSG,
+                    "code": 401
+                }), 401
             
             token = parts[1]
             
             if token.count('.') == 2:
-                data = jwt.decode(token, options={"verify_signature": False})
+                data = jwt.decode(
+                    token,
+                    current_app.config["JWT_SECRET_KEY"],
+                    algorithms=["HS256"]
+                )
                 request.user = data
             else:
                 from app.models.user import User
@@ -40,22 +51,34 @@ def jwt_required(f):
                 if not user:
                     user = User.query.filter_by(java_token=token).first()
                 
-                if user:
-                    request.user = {
+                if not user:
+                    return jsonify({
+                        "msg": SESSION_ERROR_MSG,
+                        "code": 401
+                    }), 401
+                
+                request.user = {
                         'sub': user.external_id,
                         'email': user.email,
                         'role': user.role,
                         'external_id': user.external_id
                     }
-                else:
-                    return jsonify({"msg": "Invalid Java token", "code": 401}), 401
 
         except jwt.ExpiredSignatureError:
-            return jsonify({"msg": "Token has expired", "code": 401}), 401
+            return jsonify({
+                "msg": SESSION_ERROR_MSG,
+                "code": 401
+            }), 401
         except jwt.InvalidTokenError:
-            return jsonify({"msg": "Invalid token", "code": 401}), 401
-        except Exception as e:
-            return jsonify({"msg": str(e), "code": 401}), 401
+            return jsonify({
+                "msg": SESSION_ERROR_MSG,
+                "code": 401
+            }), 401
+        except Exception:
+            return jsonify({
+                "msg": SESSION_ERROR_MSG,
+                "code": 401
+            }), 401
 
         return f(*args, **kwargs)
 
