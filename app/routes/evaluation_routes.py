@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from sqlalchemy.sql.visitors import ExternallyTraversible
 from app.controllers.evaluation_controller import EvaluationController
 from app.utils.roles_required import roles_required
 from app.utils.jwt_required import jwt_required
@@ -20,56 +21,50 @@ def list_test():
 
 @evaluation_bp.route("/save-test", methods=["POST"])
 # @roles_required("DOCENTE")
+@jwt_required
 def register_evaluation():
     data = request.json
     return response_handler(controller.register(data))
 
 
 @evaluation_bp.route("/apply_test", methods=["POST"])
-@roles_required("DOCENTE", "PASANTE")
+# @roles_required("DOCENTE", "PASANTE")
+@jwt_required
 def apply_test():
     data = request.json
     return response_handler(controller.apply_test(data))
 
-
-# @evaluation_bp.route("/history", methods=["GET"])
-# def history():
-#     participant_external_id = request.args.get("participant_external_id")
-#     test_external_id = request.args.get("test_external_id")
-
-#     try:
-#         months = int(request.args.get("months", 6))
-#     except (ValueError, TypeError):
-#         months = 6
-
-#     return response_handler(
-#         controller.history(
-#             participant_external_id=participant_external_id,
-#             test_external_id=test_external_id,
-#             months=months,
-#         )
-#     )
-
-@evaluation_bp.route("/history", methods=["GET"])
-def history():
+@evaluation_bp.route("/participant-progress", methods=["GET"])
+@jwt_required
+def participant_progress():
     participant_external_id = request.args.get("participant_external_id")
-    test_external_id = request.args.get("test_external_id")
-    start_date = request.args.get("start_date")
-    end_date = request.args.get("end_date")
-
     return response_handler(
-        controller.history(
-            participant_external_id=participant_external_id,
-            test_external_id=test_external_id,
-            start_date=start_date,
-            end_date=end_date,
-        )
+        controller.get_participant_progress(participant_external_id)
     )
 
-
 @evaluation_bp.route("/list-tests-participant", methods=["GET"])
+@jwt_required
 def list_tests_for_participant_endpoint():
     participant_external_id = request.args.get("participant_external_id")
     return response_handler(
         controller.list_tests_for_participant(participant_external_id)
     )
+
+
+@evaluation_bp.route("/get-test/<external_id>", methods=["GET"])
+@jwt_required
+def get_test_detail(external_id):
+    return response_handler(controller.get_by_external_id(external_id))
+
+
+@evaluation_bp.route("/update-test", methods=["PUT"])
+@jwt_required
+def update_test():
+    data = request.json
+    return response_handler(controller.update(data))
+
+
+@evaluation_bp.route("/delete-test/<external_id>", methods=["DELETE"])
+@jwt_required
+def delete_test(external_id):
+    return response_handler(controller.delete(external_id))

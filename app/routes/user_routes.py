@@ -13,6 +13,7 @@ def response_handler(result):
 
 
 @user_bp.route("/users", methods=["GET"])
+@jwt_required
 def listar_users():
     result = controller.get_users()
     return response_handler(result)
@@ -23,12 +24,14 @@ def listar_users():
 #     return response_handler(controller.create_user(data))
 
 @user_bp.route("/users/<string:external_id>/status", methods=["PUT"])
+@jwt_required
 def cambiar_estado(external_id):
     data = request.json
     new_status = data.get("status") if data else None
     return response_handler(controller.change_status(external_id, new_status))
 
 @user_bp.route("/users/search-java", methods=["POST"])
+@jwt_required
 def buscar_usuario_java():
     """Busca usuario exclusivamente en el microservicio Java."""
     data = request.json
@@ -41,12 +44,14 @@ def buscar_usuario_java():
 
 
 @user_bp.route("/save-participants", methods=["POST"])
+@jwt_required
 def create_participant():
     data = request.get_json(silent=True) or {}
     return response_handler(controller.create_participant(data))
 
 
 @user_bp.route("/save-user", methods=["POST"])
+@jwt_required
 def create_user():
     """
     Registra un usuario del sistema (Docente o Pasante)
@@ -107,6 +112,7 @@ def get_participant(external_id):
 
 
 @user_bp.route("/participants/<string:external_id>", methods=["PUT"])
+@jwt_required
 def update_participant(external_id):
     """Actualiza la información básica de un participante"""
     data = request.get_json(silent=True) or {}
@@ -114,5 +120,6 @@ def update_participant(external_id):
 
 
 @user_bp.route("/participants/active/count", methods=["GET"])
+@jwt_required
 def get_active_participants_count():
     return response_handler(controller.get_active_participants_count())

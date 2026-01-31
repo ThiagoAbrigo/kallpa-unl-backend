@@ -16,7 +16,9 @@ class Assessment(db.Model):
     height = db.Column(db.Float, nullable=False)
     bmi = db.Column(db.Float, nullable=False)
     waistPerimeter = db.Column(db.Float, nullable=False)
-    wingspan = db.Column(db.Float, nullable=False)
+    armPerimeter = db.Column(db.Float, nullable=True)
+    legPerimeter = db.Column(db.Float, nullable=True)
+    calfPerimeter = db.Column(db.Float, nullable=True) 
     status = db.Column(db.String(30), nullable=False)
 
     def saveResults(self):
