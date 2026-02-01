@@ -7,9 +7,19 @@ from app import db
 
 
 class AttendanceController:
+    """
+    Controlador para gestión de asistencias del proyecto Kallpa UNL
+    
+    Funcionalidades:
+    - Registro individual y masivo de asistencias
+    - Validación de capacidad y duplicados
+    - Gestión de horarios y sesiones recurrentes
+    - Cálculo de estadísticas y porcentajes de asistencia
+    - Filtrado por fecha, participante y programa
+    """
 
     def register_attendance(self, data):
-        """Registrar una asistencia individual"""
+        # Registra asistencia individual con validaciones de capacidad y duplicados
         try:
             errors = {}
             
@@ -108,7 +118,7 @@ class AttendanceController:
             )
 
     def register_bulk_attendance(self, data):
-        """Registrar múltiples asistencias de una sesión"""
+        # Registro masivo de asistencias para una sesión completa
         try:
             if "schedule_external_id" not in data:
                 return error_response(
@@ -187,7 +197,7 @@ class AttendanceController:
             )
 
     def get_attendances(self, filters=None):
-        """Obtener todas las asistencias con filtros opcionales"""
+        # Consulta asistencias con filtros: participante, horario, fecha, estado
         try:
             query = Attendance.query
 
@@ -233,7 +243,7 @@ class AttendanceController:
             )
 
     def get_attendance_by_id(self, external_id):
-        """Obtener una asistencia específica por su external_id"""
+        # Busca registro de asistencia por ID externo
         try:
             attendance = Attendance.query.filter_by(external_id=external_id).first()
 
@@ -258,7 +268,7 @@ class AttendanceController:
             )
 
     def update_attendance(self, external_id, data):
-        """Actualizar una asistencia existente"""
+        # Modifica estado de asistencia existente (presente/ausente)
         try:
             attendance = Attendance.query.filter_by(external_id=external_id).first()
 
@@ -302,7 +312,7 @@ class AttendanceController:
             )
 
     def delete_attendance(self, external_id):
-        """Eliminar una asistencia"""
+        # Elimina registro de asistencia de la base de datos
         try:
             attendance = Attendance.query.filter_by(external_id=external_id).first()
 
@@ -334,7 +344,7 @@ class AttendanceController:
             )
 
     def get_participant_summary(self, participant_external_id):
-        """Obtener resumen de asistencias de un participante"""
+        # Calcula estadísticas de asistencia: total, presentes, ausentes, porcentaje
         try:
             participant = Participant.query.filter_by(
                 external_id=participant_external_id
@@ -376,10 +386,10 @@ class AttendanceController:
                 data={"error": str(e)}
             )
 
-    # ========== MÉTODOS PÚBLICOS PARA EL FRONTEND ==========
+    # === ENDPOINTS PÚBLICOS PARA DASHBOARD ===
 
     def get_participants(self, program=None):
-        """Obtener todos los participantes, opcionalmente filtrados por programa"""
+        # Lista participantes activos con porcentaje de asistencia calculado
         try:
             query = Participant.query
             if program:
@@ -414,7 +424,7 @@ class AttendanceController:
             )
 
     def get_schedules(self):
-        """Obtener todos los horarios"""
+        # Retorna horarios/sesiones activas del sistema
         try:
             schedules = Schedule.query.filter_by(status="active").all()
             result = []
@@ -445,11 +455,11 @@ class AttendanceController:
             )
 
     def create_schedule(self, data):
-        """Crear un nuevo horario/sesión"""
+        # Crea nueva sesión con validaciones de horario, capacidad y solapamiento
         try:
             errors = {}
             
-            # Map camelCase inputs to snake_case if necessary
+            # Mapeo de campos del frontend (camelCase -> snake_case)
             name = data.get("name")
             day_of_week = data.get("day_of_week") or data.get("dayOfWeek")
             start_time = data.get("start_time") or data.get("startTime")
@@ -457,7 +467,7 @@ class AttendanceController:
             max_slots = data.get("max_slots") or data.get("maxSlots")
             program = data.get("program")
             
-            # Campos opcionales de fecha
+            # Campos para sesiones específicas o recurrentes
             specific_date = data.get("specific_date") or data.get("specificDate")
             start_date = data.get("start_date") or data.get("startDate")
             end_date = data.get("end_date") or data.get("endDate")
@@ -465,7 +475,7 @@ class AttendanceController:
             location = data.get("location")
             description = data.get("description")
 
-            # Validar campos requeridos
+            # Validación de campos obligatorios
             if not name:
                 errors["name"] = "El nombre es requerido"
             if not start_time:
@@ -530,7 +540,7 @@ class AttendanceController:
             if errors:
                 return error_response(msg="Error de validación", data=errors, code=400)
 
-            # Validate Overlaps (solo si tiene dayOfWeek)
+            # Validación de solapamiento de horarios para sesiones recurrentes
             if day_of_week:
                 overlaps = Schedule.query.filter(
                     Schedule.dayOfWeek == day_of_week.upper(),
@@ -579,7 +589,7 @@ class AttendanceController:
             )
 
     def update_schedule(self, schedule_id, data):
-        """Actualizar un horario"""
+        # Actualiza campos de sesión existente
         try:
             schedule = Schedule.query.filter_by(external_id=schedule_id).first()
             if not schedule:
@@ -621,7 +631,7 @@ class AttendanceController:
             )
 
     def delete_schedule(self, schedule_id):
-        """Eliminar un horario"""
+        # Eliminación lógica: marca sesión como inactiva
         try:
             schedule = Schedule.query.filter_by(external_id=schedule_id).first()
             if not schedule:
@@ -642,14 +652,15 @@ class AttendanceController:
             )
 
     def get_today_sessions(self):
-        """Obtener las sesiones programadas para hoy"""
+        # Obtiene sesiones programadas para hoy: recurrentes + fecha específica
         try:
             from datetime import date as date_class
+            # Mapeo de días: 0=Lunes, 1=Martes, ... 6=Domingo
             dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
             hoy_date = date_class.today().isoformat()
             hoy_dia = dias_semana[datetime.now().weekday()]
 
-            # Obtener sesiones recurrentes del día Y sesiones con fecha específica de hoy
+            # Consulta: sesiones recurrentes del día + sesiones específicas de hoy
             schedules = Schedule.query.filter(
                 Schedule.status == "active"
             ).filter(
@@ -661,13 +672,12 @@ class AttendanceController:
             
             result = []
             for s in schedules:
-                # Verificar si ya tiene asistencias registradas para hoy
+                # Determinar estado: completada si ya tiene asistencias registradas
                 attendances_count = Attendance.query.filter_by(
                     schedule_id=s.id,
                     date=hoy_date
                 ).count()
                 
-                # Determinar el estado
                 status = "completada" if attendances_count > 0 else "pendiente"
                 
                 result.append(
@@ -699,7 +709,7 @@ class AttendanceController:
     def get_history(
         self, date_from=None, date_to=None, schedule_id=None, day_filter=None
     ):
-        """Obtener historial de asistencias con filtros"""
+        # Historial de asistencias con filtros de fecha, sesión y día
         try:
             query = Attendance.query.join(Schedule).join(Participant)
 
@@ -749,11 +759,11 @@ class AttendanceController:
             )
 
     def register_public_attendance(self, data):
-        """Registrar asistencia desde el frontend"""
+        # Endpoint público que utiliza registro masivo
         return self.register_bulk_attendance(data)
 
     def get_programs(self):
-        """Obtener todos los programas (distinct list)"""
+        # Lista única de programas existentes en horarios
         try:
             programs = db.session.query(Schedule.program).distinct().all()
             result = [{"name": p[0]} for p in programs if p[0]]
@@ -766,7 +776,7 @@ class AttendanceController:
             )
 
     def get_session_detail(self, schedule_id, date):
-        """Obtener detalle de asistencia de una sesión"""
+        # Detalle completo de participantes y estados de una sesión específica
         try:
             schedule = Schedule.query.filter_by(external_id=schedule_id).first()
             if not schedule:
@@ -804,7 +814,7 @@ class AttendanceController:
             )
 
     def delete_session_attendance(self, schedule_id, date):
-        """Eliminar asistencia de una sesión"""
+        # Elimina todos los registros de asistencia de una fecha específica
         try:
             schedule = Schedule.query.filter_by(external_id=schedule_id).first()
             if not schedule:
@@ -829,7 +839,7 @@ class AttendanceController:
             )
 
     def _calculate_attendance_percentage(self, participant_id):
-        """Calcula el porcentaje de asistencia de un participante"""
+        # Método interno: calcula porcentaje de asistencias de un participante
         try:
             total = Attendance.query.filter_by(participant_id=participant_id).count()
             if total == 0:
@@ -842,20 +852,19 @@ class AttendanceController:
             return 0
 
     def get_daily_attendance_percentage(self, date_str=None):
-        """Obtener la sesión con el porcentaje de asistencia más bajo del último día o fecha especificada"""
+        # Analiza sesiones del día y retorna la de menor porcentaje de asistencia
         try:
             from datetime import date as date_class
 
-            # Si no se pasa fecha, buscamos la última fecha con registros
+            # Si no hay fecha, buscar última fecha con registros de asistencia
             if date_str:
                 fecha = date_str
             else:
-                # Traer la última fecha registrada en Attendance
                 last_attendance = Attendance.query.order_by(Attendance.date.desc()).first()
                 if last_attendance:
                     fecha = last_attendance.date
                 else:
-                    fecha = date_class.today().isoformat()  # fallback si no hay registros
+                    fecha = date_class.today().isoformat()  # fallback sin registros
 
             # Traer todas las sesiones activas
             schedules = Schedule.query.filter_by(status="active").all()
@@ -886,7 +895,7 @@ class AttendanceController:
             if not result:
                 return success_response(msg=f"No hay sesiones activas para el día {fecha}", data=[])
 
-            # Seleccionar la sesión con el porcentaje más bajo
+            # Selección de sesión con porcentaje más bajo para dashboard
             lowest_attendance = min(result, key=lambda x: x["attendance_percentage"])
 
             return success_response(
