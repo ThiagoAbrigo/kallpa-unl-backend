@@ -347,8 +347,6 @@ class UserController:
             db.session.add(participant)
             db.session.commit()
             
-            # Recargar participante para asegurar ID consistente
-            # Esto soluciona el problema de responsables huérfanos
             p_fresh = Participant.query.filter_by(external_id=participant.external_id).first()
             
             try:
@@ -376,7 +374,6 @@ class UserController:
                 )
 
             except Exception as e:
-                # Si falla algo después de crear el participante, lo borramos para no dejar basura
                 db.session.delete(p_fresh)
                 db.session.commit()
                 return error_response(f"Error creando responsable: {str(e)}", 500)
