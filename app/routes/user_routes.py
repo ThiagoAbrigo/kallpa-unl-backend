@@ -131,3 +131,11 @@ def get_participant(external_id):
 @jwt_required
 def get_active_participants_count():
     return response_handler(controller.get_active_participants_count())
+
+
+@user_bp.route("/participants/<string:external_id>", methods=["PUT"])
+@jwt_required
+def update_participant(external_id):
+    """Actualiza los datos de un participante y su responsable (si tiene)"""
+    data = request.get_json(silent=True) or {}
+    return response_handler(controller.update_participant(external_id, data))
