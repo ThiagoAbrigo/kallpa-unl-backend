@@ -269,8 +269,9 @@ def delete_session_attendance_legacy(schedule_id, date):
     return response_handler(result)
 
 @attendance_bp.route("/attendance/daily/", defaults={"date": None}, methods=["GET"])
-@jwt_required
+
 @attendance_bp.route("/attendance/daily/<date>", methods=["GET"])
+
 def get_daily_attendance(date=None):
     # Análisis diario: sesión con menor porcentaje de asistencia
     result = controller.get_daily_attendance_percentage(date)

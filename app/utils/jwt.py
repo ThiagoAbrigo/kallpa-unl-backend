@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import current_app
 
 
-def generate_token(payload, expires_minutes=2):
+def generate_token(payload, expires_minutes=60):
     payload = payload.copy()
     payload["iat"] = datetime.utcnow()
     payload["exp"] = datetime.utcnow() + timedelta(minutes=expires_minutes)
