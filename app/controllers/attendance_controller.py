@@ -489,7 +489,7 @@ class AttendanceController:
             
             # Validar que tenga dayOfWeek O specificDate (al menos uno)
             if not day_of_week and not specific_date:
-                errors["day_of_week"] = "Se requiere dayOfWeek o specificDate"
+                errors["day_of_week"] = "Debe seleccionar un día de la semana o una fecha específica"
             
             # Validar programa
             valid_programs = ["INICIACION", "FUNCIONAL"]
