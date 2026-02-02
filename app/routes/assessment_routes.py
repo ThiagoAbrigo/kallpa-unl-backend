@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.controllers.assessment_controller import AssessmentController
 from app.models.activityLog import ActivityLog
-from app.utils import jwt_required
+from app.utils.jwt_required import jwt_required
 
 assessment_bp = Blueprint("assessment", __name__)
 controller = AssessmentController()

@@ -5,6 +5,15 @@ from app.utils.responses import error_response, success_response
 from app import db
 from sqlalchemy import func
 
+from app.utils.validations.assessment_validation import (
+    validate_numeric_fields,
+    validate_ranges,
+    validate_required_fields,
+)
+
+VALIDATION_ERROR_MSG = "Error de validación"
+INTERNAL_ERROR_MSG = "Error interno del servidor"
+
 
 class AssessmentController:
     def classify_bmi_adult(self, bmi):
@@ -17,7 +26,7 @@ class AssessmentController:
         else:
             return "Obesidad"
 
-    def calculateBMI(self, weight, height):
+    def calculate_bmi(self, weight, height):
         if height <= 0 or weight <= 0:
             return None
         return round(weight / (height**2), 2)
@@ -53,120 +62,73 @@ class AssessmentController:
     def register(self, data):
         try:
             errors = {}
-            # 1. Obtener campos
+
+            # 1. Validaciones básicas
+            errors.update(validate_required_fields(data))
+
             participant_external_id = data.get("participant_external_id")
             weight = data.get("weight")
             height = data.get("height")
             date = data.get("date")
-            waistPerimeter = data.get("waistPerimeter")
-            armPerimeter = data.get("armPerimeter")
-            legPerimeter = data.get("legPerimeter")
-            calfPerimeter = data.get("calfPerimeter")
 
-            # 2. Validar existencia (obligatorios)
-            if not participant_external_id or not str(participant_external_id).strip():
-                errors["participant_external_id"] = "Selecciona un participante"
+            waist = data.get("waistPerimeter")
+            arm = data.get("armPerimeter")
+            leg = data.get("legPerimeter")
+            calf = data.get("calfPerimeter")
 
-            if weight is None:
-                errors["weight"] = "Campo requerido"
+            # 2. Validar tipos numéricos
+            errors.update(
+                validate_numeric_fields(
+                    {
+                        "weight": weight,
+                        "height": height,
+                        "waistPerimeter": waist,
+                        "armPerimeter": arm,
+                        "legPerimeter": leg,
+                        "calfPerimeter": calf,
+                    }
+                )
+            )
 
-            if height is None:
-                errors["height"] = "Campo requerido"
+            # 3. Validar rangos
+            errors.update(validate_ranges(weight, height, waist, arm, leg, calf))
 
-            if date is None:
-                errors["date"] = "Campo requerido"
-
-            if waistPerimeter is None:
-                waistPerimeter = 0
-
-            if armPerimeter is None:
-                armPerimeter = 0
-
-            if legPerimeter is None:
-                legPerimeter = 0
-
-            if calfPerimeter is None:
-                calfPerimeter = 0
-
-            # 3. Validar tipos (letras, strings, etc.)
-            if weight is not None and not isinstance(weight, (int, float)):
-                errors["weight"] = "El peso debe ser numérico"
-
-            if height is not None and not isinstance(height, (int, float)):
-                errors["height"] = "La altura debe ser numérica"
-
-            for field, value, label in [
-                ("waistPerimeter", waistPerimeter, "waistPerimeter"),
-                ("armPerimeter", armPerimeter, "armPerimeter"),
-                ("legPerimeter", legPerimeter, "legPerimeter"),
-                ("calfPerimeter", calfPerimeter, "calfPerimeter"),
-            ]:
-                if value is not None and not isinstance(value, (int, float)):
-                    errors[field] = "Debe ser numérico"
-
-            # 4. Validar rangos antropométricos
-            # =========================
-            if isinstance(weight, (int, float)):
-                if weight <= 0:
-                    errors["weight"] = "El peso debe ser mayor a 0"
-                elif weight < 0.5 or weight > 500:
-                    errors["weight"] = "El peso debe estar entre 0.5 y 500 kg"
-
-            # Altura (incluye recién nacidos)
-            if isinstance(height, (int, float)):
-                if height <= 0:
-                    errors["height"] = "La altura debe ser mayor a 0"
-                elif height < 0.3 or height > 2.5:
-                    errors["height"] = "La altura debe estar entre 0.3 y 2.5 metros"
-
-            # Perímetro de cintura (cm)
-            if waistPerimeter < 0 or waistPerimeter > 200:
-                errors["waistPerimeter"] = "Debe estar entre 0 y 200 cm"
-
-            if armPerimeter < 0 or armPerimeter > 80:
-                errors["armPerimeter"] = "Debe estar entre 10 y 80 cm"
-
-            if legPerimeter < 0 or legPerimeter > 120:
-                errors["legPerimeter"] = "Debe estar entre 20 y 120 cm"
-
-            if calfPerimeter < 0 or calfPerimeter > 70:
-                errors["calfPerimeter"] = "Debe estar entre 15 y 70 cm"
-            # 5. Retornar errores si existen
+            # 4. Retornar errores si existen
             if errors:
                 return error_response(
-                    msg="Error de validación", errors=errors, code=400
+                    msg=VALIDATION_ERROR_MSG,
+                    errors=errors,
+                    code=400,
                 )
 
-            # 6. Buscar participante
+            # 5. Buscar participante
             participant = Participant.query.filter_by(
                 external_id=participant_external_id
             ).first()
 
             if not participant:
                 return error_response(
-                    msg="Error de validación",
+                    msg=VALIDATION_ERROR_MSG,
                     errors={"participant_external_id": "Participante no encontrado"},
                     code=400,
                 )
 
-            # 7. Calcular IMC
-            bmi = self.calculateBMI(weight, height)
-
-            # Clasificación solo para adultos (opcional)
+            # 6. Calcular IMC
+            bmi = self.calculate_bmi(weight, height)
             status = self.classify_bmi_adult(bmi)
 
-            # 8. Crear evaluación
+            # 7. Crear evaluación
             assessment = Assessment(
                 participant_id=participant.id,
                 date=date,
                 weight=weight,
                 height=height,
-                waistPerimeter=waistPerimeter,
+                waistPerimeter=waist,
+                armPerimeter=arm,
+                legPerimeter=leg,
+                calfPerimeter=calf,
                 bmi=bmi,
                 status=status,
-                armPerimeter=armPerimeter,
-                legPerimeter=legPerimeter,
-                calfPerimeter=calfPerimeter,
             )
 
             db.session.add(assessment)
@@ -174,7 +136,10 @@ class AssessmentController:
             log_activity(
                 type="MEDICION",
                 title="Medición registrada",
-                description=f"Se registró una evaluación para {participant.firstName} {participant.lastName}",
+                description=(
+                    f"Se registró una evaluación para "
+                    f"{participant.firstName} {participant.lastName}"
+                ),
             )
 
             db.session.commit()
@@ -192,7 +157,10 @@ class AssessmentController:
 
         except Exception as e:
             db.session.rollback()
-            return error_response(msg=f"Error interno del servidor: {str(e)}", code=500)
+            return error_response(
+                msg=f"Error interno del servidor: {str(e)}",
+                code=500,
+            )
 
     def get_participants_external_id(self, participant_external_id):
         try:
@@ -237,7 +205,7 @@ class AssessmentController:
                         "firstName": f"{participant.firstName} {participant.lastName}",
                         "dni": participant.dni,
                         "age": participant.age,
-                        "status": participant.status
+                        "status": participant.status,
                     },
                     "assessments": data,
                 },
