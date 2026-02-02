@@ -40,9 +40,13 @@ def jwt_required(f):
 
 def _extract_bearer_token(auth_header):
     parts = auth_header.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise ValueError("Invalid Authorization header")
-    return parts[1]
+    # Si viene con "Bearer token"
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        return parts[1]
+    # Si viene solo el token (sin Bearer)
+    if len(parts) == 1:
+        return parts[0]
+    raise ValueError("Invalid Authorization header")
 
 
 def _resolve_user_from_token(token):

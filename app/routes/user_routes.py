@@ -122,6 +122,7 @@ def update_user_profile():
 
 
 @user_bp.route("/participants/<string:external_id>", methods=["GET"])
+@jwt_required
 def get_participant(external_id):
     """Obtiene un participante por su external_id con su responsable (si tiene)"""
     return response_handler(controller.get_participant_by_id(external_id))
