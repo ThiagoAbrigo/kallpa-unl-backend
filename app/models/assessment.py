@@ -1,5 +1,6 @@
 import uuid
 from app import db
+from datetime import date
 
 class Assessment(db.Model):
     __tablename__ = "assessment"
@@ -11,7 +12,7 @@ class Assessment(db.Model):
     participant_id = db.Column(
         db.Integer, db.ForeignKey("participant.id"), nullable=False
     )
-    date = db.Column(db.String(50), nullable=False)
+    date = db.Column(db.Date, nullable=False, default=date.today)
     weight = db.Column(db.Float, nullable=False)
     height = db.Column(db.Float, nullable=False)
     bmi = db.Column(db.Float, nullable=False)

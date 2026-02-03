@@ -285,14 +285,12 @@ class EvaluationController:
             if not test:
                 return error_response(ERROR_TEST_NOT_FOUND)
 
-            evaluation_date, error = parse_evaluation_date(data.get("date"))
             if error:
                 return error_response(error)
 
             evaluation = Evaluation(
                 participant_id=participant.id,
                 test_id=test.id,
-                date=evaluation_date,
                 general_observations=data.get("general_observations"),
             )
 
