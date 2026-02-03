@@ -1,4 +1,6 @@
 import re
+from app.models.participant import Participant
+from app.models.responsible import Responsible
 from app.models.user import User
 from app.utils.constants.message import (
     DNI_EXISTS,
@@ -26,10 +28,22 @@ ALLOWED_ROLES = ["DOCENTE", "PASANTE", "ADMINISTRADOR"]
 
 
 def validate_required_fields(data, required_fields):
+    field_names = {
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "dni": "DNI",
+        "phone": "Teléfono",
+        "email": "Correo electrónico",
+        "password": "Contraseña",
+        "role": "Rol",
+        "address": "Dirección"
+    }
     errors = {}
     for field in required_fields:
-        if field not in data or not str(data[field]).strip():
-            errors[field] = REQUIRED_FIELD
+        value = data.get(field)
+        if value is None or (isinstance(value, str) and not value.strip()):
+            friendly_name = field_names.get(field, field)
+            errors[field] = f"{friendly_name} requerido"
     return errors
 
 
@@ -43,8 +57,14 @@ def validate_dni(dni, is_sequential):
         errors["dni"] = DNI_ZEROS
     elif is_sequential(dni):
         errors["dni"] = DNI_SEQUENTIAL
-    elif User.query.filter_by(dni=dni).first():
-        errors["dni"] = DNI_EXISTS
+    else:
+        exists = (
+            User.query.filter_by(dni=dni).first()
+            or Participant.query.filter_by(dni=dni).first()
+            or Responsible.query.filter_by(dni=dni).first()
+        )
+        if exists:
+            errors["dni"] = DNI_EXISTS
     return errors
 
 
