@@ -7,10 +7,10 @@ REQUIRED_FIELD = "Campo requerido"
 TEST_NOT_FOUND = "Test no encontrado"
 TEST_ALREADY_EXISTS = "El test con ese nombre ya existe"
 
-TEST_CREATED = "Test creado correctamente"
-TEST_UPDATED = "Test actualizado correctamente"
-TEST_LIST = "Listado de tests con ejercicios"
-TEST_EDIT_FORBIDDEN = "No se puede editar el test"
+TEST_CREATED = "Evaluación creado correctamente"
+TEST_UPDATED = "Evaluación actualizado correctamente"
+TEST_LIST = "Listado de evaluaciónes con ejercicios"
+TEST_EDIT_FORBIDDEN = "No se puede editar la evaluación"
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -23,7 +23,7 @@ ERROR_EX_NOT_IN_TEST = "Ejercicio no pertenece al test"
 ERROR_EX_DUPLICATED = "Ejercicio duplicado"
 ERROR_VALUE_INVALID = "El valor del ejercicio debe ser numérico y mayor o igual a 0"
 ERROR_DATE_FORMAT = "Formato de fecha inválido, debe ser YYYY-MM-DD"
-SUCCESS_APPLY_TEST = "Test aplicado correctamente"
+SUCCESS_APPLY_TEST = "Evaluación aplicada correctamente"
 
 # DNI
 DNI_ONLY_NUMBERS = "DNI debe contener solo números"

@@ -439,7 +439,7 @@ class EvaluationController:
             db.session.commit()
 
             return success_response(
-                msg=f"El test ha sido marcado como {test.status} correctamente.",
+                msg=f"La evaluación ha sido marcado como {test.status} correctamente.",
                 code=200,
             )
 
