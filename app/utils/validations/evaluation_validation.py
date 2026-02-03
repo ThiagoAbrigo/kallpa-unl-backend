@@ -19,15 +19,19 @@ def validate_register_input(data):
 
 
 def validate_test_fields(name, frequency):
+    friendly_names = {
+        "name": "Nombre",
+        "frequency_months": "Frecuencia",
+    }
     errors = {}
 
     if not name:
-        errors["name"] = REQUIRED_FIELD
+        errors["name"] = f"{friendly_names['name']} requerido"
     elif Test.query.filter(db.func.lower(Test.name) == name.lower()).first():
-        errors["name"] = "El test con ese nombre ya existe"
+        errors["name"] = "La Evaluación ya existe"
 
     if frequency is None:
-        errors["frequency_months"] = REQUIRED_FIELD
+        errors["frequency_months"] = f"{friendly_names['frequency_months']} requerido"
     elif not isinstance(frequency, int):
         errors["frequency_months"] = "La frecuencia debe ser un número entero"
     elif frequency < 1 or frequency > 12:
