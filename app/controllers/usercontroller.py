@@ -133,7 +133,8 @@ class UserController:
             address = address if address else "NINGUNA"
 
             # ---------- Validaciones ----------
-            errors.update(validate_dni(dni, self._is_sequential))
+            # Permitir mismo DNI que un participante: esa persona puede ser también docente/pasante
+            errors.update(validate_dni(dni, self._is_sequential, check_participant=False))
             errors.update(validate_email(email))
             errors.update(
                 validate_name(
@@ -326,7 +327,14 @@ class UserController:
 
             # self._check_java_duplicate(participant_data, token)
 
-            participant = self._build_participant(participant_data, is_minor, program)
+            # Si el DNI pertenece a un User (docente/pasante), vincular participante a ese usuario
+            dni_str = str(participant_data.get("dni", "")).strip()
+            existing_user = User.query.filter_by(dni=dni_str).first()
+            user_id = existing_user.id if existing_user else None
+
+            participant = self._build_participant(
+                participant_data, is_minor, program, user_id=user_id
+            )
             db.session.add(participant)
             db.session.commit()
 
@@ -419,11 +427,13 @@ class UserController:
             elif self._is_sequential(dni_str):
                 errors["dni"] = "DNI no puede ser un número secuencial"
             else:
+                # Permitir mismo DNI que un User (docente/pasante): esa persona puede ser también participante
                 if (
                     Participant.query.filter_by(dni=dni_str).first()
                     or Responsible.query.filter_by(dni=dni_str).first()
                 ):
                     errors["dni"] = "El DNI ya está registrado"
+                # Si existe solo en User, no rechazar; en create_participant se vinculará con user_id
 
         # ========== VALIDACIÓN DE TELÉFONO ==========
         phone = participant.get("phone")
@@ -622,9 +632,10 @@ class UserController:
 
         return None
 
-    def _build_participant(self, data, is_minor, program=None):
+    def _build_participant(self, data, is_minor, program=None, user_id=None):
         """
         Construye una instancia de Participant con los datos validados.
+        user_id: opcional; si la persona es también User (docente/pasante), se vincula aquí.
         """
         return Participant(
             firstName=data.get("firstName"),
@@ -637,6 +648,7 @@ class UserController:
             status="ACTIVO",
             type=data.get("type", "EXTERNO"),
             program=program,
+            user_id=user_id,
         )
 
     def _create_responsible(self, data, participant_id):

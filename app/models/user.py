@@ -22,3 +22,8 @@ class User(db.Model):
     status = db.Column(db.String(20), nullable=False)  # activo | inactivo
     java_external = db.Column(db.String(100), nullable=True)  # ID externo del microservicio Java
     java_token = db.Column(db.String(500), nullable=True)  # Token Bearer de Java para sincronización
+
+    # Si este usuario (docente/pasante) también es participante del club
+    participant = db.relationship(
+        "Participant", backref="user", uselist=False, foreign_keys="Participant.user_id"
+    )

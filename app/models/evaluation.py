@@ -1,6 +1,6 @@
 from app import db
 import uuid
-
+from datetime import date
 
 class Evaluation(db.Model):
     __tablename__ = "evaluation"
@@ -13,7 +13,7 @@ class Evaluation(db.Model):
         db.Integer, db.ForeignKey("participant.id"), nullable=False
     )
     test_id = db.Column(db.Integer, db.ForeignKey("test.id"), nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    date = db.Column(db.Date, nullable=False, default=date.today)
     general_observations = db.Column(db.String(255))
 
     results = db.relationship("EvaluationResult", backref="evaluation", lazy=True)

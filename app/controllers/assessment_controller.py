@@ -69,7 +69,6 @@ class AssessmentController:
             participant_external_id = data.get("participant_external_id")
             weight = data.get("weight")
             height = data.get("height")
-            date = data.get("date")
 
             waist = data.get("waistPerimeter")
             arm = data.get("armPerimeter")
@@ -120,7 +119,6 @@ class AssessmentController:
             # 7. Crear evaluación
             assessment = Assessment(
                 participant_id=participant.id,
-                date=date,
                 weight=weight,
                 height=height,
                 waistPerimeter=waist,

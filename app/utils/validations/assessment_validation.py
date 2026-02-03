@@ -1,5 +1,5 @@
 REQUIRED_FIELD_MSG = "Campo requerido"
-
+from datetime import datetime, date as date_cls
 
 def validate_required_fields(data):
     errors = {}

@@ -47,7 +47,13 @@ def validate_required_fields(data, required_fields):
     return errors
 
 
-def validate_dni(dni, is_sequential):
+def validate_dni(dni, is_sequential, check_participant=True):
+    """
+    Valida formato y unicidad del DNI.
+    - check_participant=True (default): DNI no debe existir en User, Participant ni Responsible.
+    - check_participant=False: solo rechaza si existe en User o Responsible.
+      Usado en create_user para permitir que un participante sea también docente/pasante (mismo DNI).
+    """
     errors = {}
     if not dni.isdigit():
         errors["dni"] = DNI_ONLY_NUMBERS
@@ -58,12 +64,10 @@ def validate_dni(dni, is_sequential):
     elif is_sequential(dni):
         errors["dni"] = DNI_SEQUENTIAL
     else:
-        exists = (
-            User.query.filter_by(dni=dni).first()
-            or Participant.query.filter_by(dni=dni).first()
-            or Responsible.query.filter_by(dni=dni).first()
-        )
-        if exists:
+        exists_user = User.query.filter_by(dni=dni).first()
+        exists_responsible = Responsible.query.filter_by(dni=dni).first()
+        exists_participant = Participant.query.filter_by(dni=dni).first() if check_participant else None
+        if exists_user or exists_responsible or exists_participant:
             errors["dni"] = DNI_EXISTS
     return errors
 
