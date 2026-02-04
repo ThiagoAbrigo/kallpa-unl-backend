@@ -41,7 +41,7 @@ def buscar_usuario_java():
 
 
 @user_bp.route("/save-participants", methods=["POST"])
-@jwt_required
+# @jwt_required
 def create_participant():
     data = request.get_json(silent=True) or {}
     return response_handler(controller.create_participant(data))

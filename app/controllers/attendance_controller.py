@@ -93,15 +93,15 @@ class AttendanceController:
 
             # Validación de campos obligatorios
             if not name:
-                errors["name"] = "El nombre es requerido"
+                errors["name"] = "Nombre requerido"
             if not start_time:
-                errors["start_time"] = "La hora de inicio es requerida"
+                errors["start_time"] = "Hora de inicio es requerida"
             if not end_time:
-                errors["end_time"] = "La hora de fin es requerida"
+                errors["end_time"] = "Hora de fin es requerida"
             if not max_slots:
-                errors["max_slots"] = "El número de cupos es requerido"
+                errors["max_slots"] = "Número de cupos es requerido"
             if not program:
-                errors["program"] = "El programa es requerido"
+                errors["program"] = "Programa requerido"
 
             # Validar que tenga dayOfWeek O specificDate (al menos uno)
             if not day_of_week and not specific_date:

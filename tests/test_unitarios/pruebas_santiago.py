@@ -4,8 +4,8 @@ from app.controllers.assessment_controller import AssessmentController
 
 
 class TestAssessmentController(unittest.TestCase):
-    #comando para ejecutar las pruebas
-    #python -m unittest tests.pruebas_santiago -v
+    # comando para ejecutar las pruebas
+    # python -m unittest tests.pruebas_santiago -v
 
     def setUp(self):
         self.controller = AssessmentController()
@@ -64,9 +64,11 @@ class TestAssessmentController(unittest.TestCase):
             "participant_external_id": "abc123",
             "weight": -80,  # valor inválido
             "height": 1.76,
-            "waistPerimeter": 0.8,
-            "wingspan": 1.7,
-            "date": "2025-01-05",
+            "waistPerimeter": 0.1,  # numérico pero no obligatorio
+            "armPerimeter": -1,  # inválido
+            "legPerimeter": 5.0,  # fuera de rango
+            "calfPerimeter": None,  # permitido
+            "date": None,
         }
 
         result = self.controller.register(data)
@@ -74,27 +76,38 @@ class TestAssessmentController(unittest.TestCase):
         # Aquí 400 es lo esperado
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["status"], "error")
-        print(result["errors"]["weight"])
+        # self.assertIn("participant_external_id", result["errors"])
         self.assertIn("weight", result["errors"])
+        self.assertIn("height", result["errors"])
+        self.assertIn("armPerimeter", result["errors"])
+        self.assertIn("legPerimeter", result["errors"])
+        self.assertIn("date", result["errors"])
+        print(result["errors"]["weight"])
 
     @patch("app.controllers.assessment_controller.db.session")
     @patch("app.controllers.assessment_controller.log_activity")
     @patch("app.controllers.assessment_controller.Participant")
-    def test_register_validate_all_fields(self, mock_participant, mock_log_activity, mock_session):
+    def test_register_validate_all_fields(
+        self, mock_participant, mock_log_activity, mock_session
+    ):
         fake_participant = MagicMock()
         fake_participant.id = 1
         fake_participant.firstName = "Carlos"
         fake_participant.lastName = "Lopez"
         fake_participant.external_id = "abc123"
-        mock_participant.query.filter_by.return_value.first.return_value = fake_participant
+        mock_participant.query.filter_by.return_value.first.return_value = (
+            fake_participant
+        )
 
         data = {
             "participant_external_id": None,  # obligatorio faltante
-            "weight": -5,                     # inválido
-            "height": 3.0,                    # fuera de rango
-            "waistPerimeter": 0.1,            # fuera de rango
-            "wingspan": 3.0,                  # fuera de rango
-            "date": None                       # obligatorio faltante
+            "weight": -5,  # inválido
+            "height": 3.0,  # fuera de rango
+            "waistPerimeter": 0.1,  # numérico pero no obligatorio
+            "armPerimeter": -1,  # inválido
+            "legPerimeter": 5.0,  # fuera de rango
+            "calfPerimeter": None,  # permitido
+            "date": None,  # obligatorio faltante
         }
 
         result = self.controller.register(data)
@@ -105,10 +118,13 @@ class TestAssessmentController(unittest.TestCase):
         self.assertIn("participant_external_id", result["errors"])
         self.assertIn("weight", result["errors"])
         self.assertIn("height", result["errors"])
-        self.assertIn("waistPerimeter", result["errors"])
-        self.assertIn("wingspan", result["errors"])
+        self.assertIn("armPerimeter", result["errors"])
         self.assertIn("date", result["errors"])
 
         mock_session.add.assert_not_called()
         mock_session.commit.assert_not_called()
         mock_log_activity.assert_not_called()
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
