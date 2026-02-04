@@ -1,4 +1,5 @@
 import uuid
+import os
 from tests.test_integration.base_test import BaseTestCase
 
 
@@ -11,7 +12,10 @@ class TestDBHealth(BaseTestCase):
         self.assertEqual(response.json["db"], "ok")
 
     def _login_and_get_token(self):
-        payload = {"email": "dev@kallpa.com", "password": "xxxxx"}
+        payload = {
+            "email": os.getenv("TEST_USER_EMAIL", "dev@kallpa.com"),
+            "password": os.getenv("TEST_USER_PASSWORD", "xxxxx")
+        }
 
         response = self.client.post("/api/auth/login", json=payload)
 

@@ -1,4 +1,5 @@
 import requests
+import os
 from app.config.config import Config
 from app.utils.responses import error_response
 from app.utils.jwt import generate_token
@@ -27,9 +28,19 @@ class AuthService:
         return (data.get("email", "").lower().strip(), data.get("password"))
 
     def _is_mock_user(self, email, password):
-        return email == "dev@kallpa.com" or (
-            email == "admin@kallpa.com" and password == "123456"
-        )
+        # Validar usuarios mock con contraseñas del .env
+        test_email = os.getenv("TEST_USER_EMAIL", "dev@kallpa.com")
+        test_password = os.getenv("TEST_USER_PASSWORD", "xxxxx")
+        test_admin_email = os.getenv("TEST_ADMIN_EMAIL", "admin@kallpa.com")
+        test_admin_password = os.getenv("TEST_ADMIN_PASSWORD", "123456")
+        
+        if email == test_email and password == test_password:
+            return True
+        
+        if email == test_admin_email and password == test_admin_password:
+            return True
+        
+        return False
 
     def _local_login(self, email, password):
         user = User.query.filter_by(email=email, status="ACTIVO").first()
