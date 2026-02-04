@@ -143,7 +143,7 @@ class AssessmentController:
             db.session.commit()
 
             return success_response(
-                msg="Evaluación registrada exitosamente",
+                msg="Medida antropométrica registrada exitosamente",
                 data={
                     "external_id": assessment.external_id,
                     "participant_external_id": participant.external_id,

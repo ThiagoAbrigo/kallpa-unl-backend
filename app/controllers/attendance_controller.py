@@ -139,8 +139,13 @@ class AttendanceController:
                 errors["end_time"] = "Formato de hora inválido. Use HH:MM (24h)"
 
             # Validar que hora de inicio sea menor a hora de fin
-            if start_time and end_time and start_time >= end_time:
-                errors["time"] = "La hora de inicio debe ser menor a la hora de fin"
+            if start_time and end_time:
+                if start_time == end_time:
+                    errors["start_time"] = "La hora de inicio y fin no pueden ser iguales"
+                    errors["end_time"] = "La hora de inicio y fin no pueden ser iguales"
+                elif start_time > end_time:
+                    errors["start_time"] = "La hora de inicio debe ser menor a la hora de fin"
+                    errors["end_time"] = "La hora de fin debe ser mayor a la hora de inicio"
 
             # Validar cupos
             if max_slots:

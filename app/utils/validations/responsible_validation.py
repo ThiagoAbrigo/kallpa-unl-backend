@@ -1,12 +1,10 @@
 import re
-from app.models.responsible import Responsible
 from app.utils.constants.message import (
     REQUIRED_FIELD,
     DNI_ONLY_NUMBERS,
     DNI_LENGTH,
     DNI_ZEROS,
     DNI_SEQUENTIAL,
-    DNI_EXISTS,
     PHONE_NUMBERS,
     PHONE_LENGTH,
     PHONE_ZEROS,
@@ -57,8 +55,6 @@ def validate_responsible(responsible, participant_dni, is_sequential):
             errors["responsibleDni"] = (
                 "El DNI del responsable no puede ser igual al del participante"
             )
-        elif Responsible.query.filter_by(dni=dni).first():
-            errors["responsibleDni"] = DNI_EXISTS
 
     # ========= TELÉFONO =========
     phone = responsible.get("phone")

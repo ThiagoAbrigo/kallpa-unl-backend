@@ -132,6 +132,7 @@ def get_participant(external_id):
 def get_active_participants_count():
     return response_handler(controller.get_active_participants_count())
 
+
 @user_bp.route("/participants/<string:external_id>", methods=["PUT"])
 @jwt_required
 def update_participant(external_id):

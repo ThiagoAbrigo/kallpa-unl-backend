@@ -592,10 +592,7 @@ class UserController:
                             "DNI no puede ser un número secuencial"
                         )
                     else:
-                        if (
-                            Responsible.query.filter_by(dni=dni_str).first()
-                            or Participant.query.filter_by(dni=dni_str).first()
-                        ):
+                        if Participant.query.filter_by(dni=dni_str).first():
                             errors["responsibleDni"] = "El DNI ya está registrado"
 
                 # Validar teléfono del responsable
@@ -1151,15 +1148,6 @@ class UserController:
                                 "DNI no puede ser un número secuencial"
                             )
                         else:
-                            # Verificar unicidad (excluyendo el responsable actual)
-                            existing_resp = Responsible.query.filter(
-                                Responsible.dni == resp_dni_str,
-                                Responsible.id != responsible.id,
-                            ).first()
-                            if existing_resp:
-                                errors["responsibleDni"] = (
-                                    "El DNI del responsable ya está registrado"
-                                )
                             # Validar que no sea igual al DNI del participante
                             participant_dni = data.get("dni", participant.dni)
                             if resp_dni_str == str(participant_dni).strip():
@@ -1259,3 +1247,27 @@ class UserController:
             db.session.rollback()
             print(f"[UserController] Error actualizando participante: {str(e)}")
             return error_response(f"Error interno del servidor: {str(e)}", 500)
+    
+    def get_user_profile(self, external_id):
+        try:
+            user = User.query.filter_by(external_id=external_id).first()
+
+            if not user:
+                return error_response("Usuario no encontrado", code=404)
+            return success_response(
+                "Datos del perfil obtenidos",
+                data={
+                    "firstName": user.firstName,
+                    "lastName": user.lastName,
+                    "dni": user.dni,
+                    "email": user.email,
+                    "phone": user.phone if user.phone != "NINGUNA" else "",
+                    "address": user.address if user.address != "NINGUNA" else "",
+                    "role": user.role,
+                    "external_id": user.external_id
+                },
+                code=200
+            )
+        except Exception as e:
+            print(f"Error en get_profile: {str(e)}")
+            return error_response("Error interno del servidor", code=500)
