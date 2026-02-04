@@ -111,52 +111,55 @@ class UserController:
 
             errors.update(validate_required_fields(data, required_fields))
 
-            if errors:
-                return error_response(
-                    REQUIRED_FIELD,
-                    code=400,
-                    data=errors,
-                )
+            # ---------- Normalizar datos (usar valores seguros para continuar validando) ----------
+            dni = str(data.get("dni", "")).strip()
+            email = str(data.get("email", "")).strip().lower()
+            first_name = str(data.get("firstName", "")).strip()
+            last_name = str(data.get("lastName", "")).strip()
+            password = str(data.get("password", ""))
+            role = data.get("role", "")
 
-            # ---------- Normalizar datos ----------
-            dni = str(data["dni"]).strip()
-            email = str(data["email"]).strip().lower()
-            first_name = str(data["firstName"]).strip()
-            last_name = str(data["lastName"]).strip()
-            password = str(data["password"])
-            role = data["role"]
-
-            phone = str(data.get("phone", "NINGUNA")).strip()
-            address = str(data.get("address", "NINGUNA")).strip()
+            phone = str(data.get("phone", "NINGUNA")).strip() or "NINGUNA"
+            address = str(data.get("address", "NINGUNA")).strip() or "NINGUNA"
 
             phone = phone if phone else "NINGUNA"
             address = address if address else "NINGUNA"
 
             # ---------- Validaciones ----------
             # Permitir mismo DNI que un participante: esa persona puede ser también docente/pasante
-            errors.update(validate_dni(dni, self._is_sequential, check_participant=False))
-            errors.update(validate_email(email))
-            errors.update(
-                validate_name(
-                    "firstName",
-                    first_name,
-                    min_msg="Nombre demasiado corto",
-                    max_msg="Nombre demasiado largo",
+            # Solo valida cada campo si tiene valor; si está vacío ya existe error de requerido
+            if dni:
+                errors.update(
+                    validate_dni(dni, self._is_sequential, check_participant=False)
                 )
-            )
-            errors.update(
-                validate_name(
-                    "lastName",
-                    last_name,
-                    min_msg="Apellido demasiado corto",
-                    max_msg="Apellido demasiado largo",
+            if email:
+                errors.update(validate_email(email))
+            if first_name:
+                errors.update(
+                    validate_name(
+                        "firstName",
+                        first_name,
+                        min_msg="Nombre demasiado corto",
+                        max_msg="Nombre demasiado largo",
+                    )
                 )
-            )
-            errors.update(validate_password(password))
-            errors.update(validate_phone(phone, self._is_sequential))
+            if last_name:
+                errors.update(
+                    validate_name(
+                        "lastName",
+                        last_name,
+                        min_msg="Apellido demasiado corto",
+                        max_msg="Apellido demasiado largo",
+                    )
+                )
+            if password:
+                errors.update(validate_password(password))
+            if phone and phone != "NINGUNA":
+                errors.update(validate_phone(phone, self._is_sequential))
 
-            if role not in ALLOWED_ROLES:
-                errors["role"] = f"Rol inválido. Use: {ALLOWED_ROLES}"
+            # Solo validar pertenencia si hay valor; si no, ya existe error de requerido
+            if role and role not in ALLOWED_ROLES:
+                errors["role"] = "Rol inválido."
 
             if errors:
                 return error_response(
@@ -412,7 +415,7 @@ class UserController:
             value = participant.get(field)
             if value is None or (isinstance(value, str) and not value.strip()):
                 errors[field] = f"{friendly_names.get(field, field)} requerido"
-
+        
         # ========== VALIDACIÓN DE DNI ==========
         dni = participant.get("dni")
         if dni:

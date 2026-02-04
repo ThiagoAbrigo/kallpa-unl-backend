@@ -1,5 +1,5 @@
 import uuid
-from tests.base_test import BaseTestCase
+from tests.test_integration.base_test import BaseTestCase
 
 
 class TestDBHealth(BaseTestCase):
