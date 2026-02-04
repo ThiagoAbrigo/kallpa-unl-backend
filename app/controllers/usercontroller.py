@@ -412,7 +412,7 @@ class UserController:
             value = participant.get(field)
             if value is None or (isinstance(value, str) and not value.strip()):
                 errors[field] = f"{friendly_names.get(field, field)} requerido"
-
+        
         # ========== VALIDACIÓN DE DNI ==========
         dni = participant.get("dni")
         if dni:

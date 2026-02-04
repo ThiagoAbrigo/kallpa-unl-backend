@@ -126,3 +126,45 @@ class AuthService:
             },
             "code": 200,
         }
+
+    def refresh_token(self, token: str):
+        """Genera un nuevo token a partir del token actual (JWT Python)."""
+        import jwt
+        from flask import current_app
+
+        if not token or not token.strip():
+            return error_response("Token no proporcionado", 401)
+
+        # Solo refrescamos tokens JWT Python (formato x.y.z)
+        if token.count(".") != 2:
+            return error_response("No se puede extender esta sesión", 400)
+
+        try:
+            payload = jwt.decode(
+                token,
+                current_app.config["JWT_SECRET_KEY"],
+                algorithms=["HS256"],
+            )
+        except jwt.ExpiredSignatureError:
+            return error_response("Token expirado. Inicia sesión nuevamente.", 401)
+        except jwt.InvalidTokenError:
+            return error_response("Token inválido", 401)
+
+        user_data = payload.get("sub") or payload.get("external_id")
+        if not user_data:
+            return error_response("Token inválido", 401)
+
+        new_token = generate_token(
+            {
+                "sub": payload.get("sub"),
+                "email": payload.get("email"),
+                "role": payload.get("role"),
+            }
+        )
+
+        return {
+            "status": "ok",
+            "msg": "Sesión extendida",
+            "token": new_token,
+            "code": 200,
+        }

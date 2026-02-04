@@ -15,6 +15,12 @@ def login():
     data = request.json
     return response_handler(controller.login(data))
 
+
+@auth_bp.route("/auth/refresh", methods=["POST"])
+def refresh():
+    return response_handler(controller.refresh())
+
+
 @auth_bp.route("/health/db", methods=["GET"])
 def db_health():
     try:
