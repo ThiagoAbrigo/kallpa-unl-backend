@@ -58,13 +58,17 @@ def delete_schedule(schedule_id):
 @attendance_bp.route("/attendance/v2/public/history", methods=["GET"])
 @jwt_required
 def get_history():
-    # Historial con filtros de rango de fechas y sesión
+    # Historial con filtros de rango de fechas, sesión y búsqueda por participante
     date_from = request.args.get("date_from") or request.args.get("startDate")
     date_to = request.args.get("date_to") or request.args.get("endDate")
     schedule_id = request.args.get("schedule_id") or request.args.get("scheduleId")
-    day_filter = request.args.get("day")
+    day_filter = request.args.get("day_of_week")
+    # Nuevos filtros de búsqueda por participante
+    search_dni = request.args.get("dni")
+    search_name = request.args.get("name") or request.args.get("search")
+    participant_id = request.args.get("participant_id") or request.args.get("participantId")
     
-    result = controller.get_history(date_from, date_to, schedule_id, day_filter)
+    result = controller.get_history(date_from, date_to, schedule_id, day_filter, search_dni, search_name, participant_id)
     return response_handler(result)
 
 

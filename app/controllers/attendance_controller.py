@@ -93,15 +93,15 @@ class AttendanceController:
 
             # Validación de campos obligatorios
             if not name:
-                errors["name"] = "El nombre es requerido"
+                errors["name"] = "Nombre requerido"
             if not start_time:
-                errors["start_time"] = "La hora de inicio es requerida"
+                errors["start_time"] = "Hora de inicio es requerida"
             if not end_time:
-                errors["end_time"] = "La hora de fin es requerida"
+                errors["end_time"] = "Hora de fin es requerida"
             if not max_slots:
-                errors["max_slots"] = "El número de cupos es requerido"
+                errors["max_slots"] = "Número de cupos es requerido"
             if not program:
-                errors["program"] = "El programa es requerido"
+                errors["program"] = "Programa requerido"
 
             # Validar que tenga dayOfWeek O specificDate (al menos uno)
             if not day_of_week and not specific_date:
@@ -230,33 +230,76 @@ class AttendanceController:
     def update_schedule(self, schedule_id, data):
         # Actualiza campos de sesión existente
         try:
+            print(f"DEBUG - Actualizando schedule {schedule_id} con data: {data}")
+            
             schedule = Schedule.query.filter_by(external_id=schedule_id).first()
             if not schedule:
                 return error_response(msg="Horario no encontrado", data={}, code=404)
 
+            # Actualizar nombre
             if "name" in data:
                 schedule.name = data["name"]
 
+            # Actualizar programa
+            if "program" in data:
+                schedule.program = data["program"]
+
+            # Actualizar día de la semana
             day_of_week = data.get("day_of_week") or data.get("dayOfWeek")
             if day_of_week:
                 schedule.dayOfWeek = day_of_week
+                print(f"DEBUG - Actualizado dayOfWeek: {day_of_week}")
 
+            # Actualizar hora de inicio
             start_time = data.get("start_time") or data.get("startTime")
             if start_time:
                 schedule.startTime = start_time
 
+            # Actualizar hora de fin
             end_time = data.get("end_time") or data.get("endTime")
             if end_time:
                 schedule.endTime = end_time
 
+            # Actualizar máximo de cupos
             max_slots = data.get("max_slots") or data.get("maxSlots")
             if max_slots:
                 schedule.maxSlots = max_slots
 
-            if "program" in data:
-                schedule.program = data["program"]
+            # Actualizar fecha específica (IMPORTANTE para sesiones de fecha específica)
+            specific_date = data.get("specific_date") or data.get("specificDate")
+            if specific_date is not None:
+                schedule.specificDate = specific_date
+                print(f"DEBUG - Actualizado specificDate: {specific_date}")
+
+            # Actualizar fecha de inicio
+            start_date = data.get("start_date") or data.get("startDate")
+            if start_date is not None:
+                schedule.startDate = start_date
+
+            # Actualizar fecha de fin
+            end_date = data.get("end_date") or data.get("endDate")
+            if end_date is not None:
+                schedule.endDate = end_date
+
+            # Actualizar si es recurrente
+            is_recurring = data.get("is_recurring") if "is_recurring" in data else data.get("isRecurring")
+            if is_recurring is not None:
+                schedule.isRecurring = is_recurring
+                print(f"DEBUG - Actualizado isRecurring: {is_recurring}")
+
+            # Actualizar ubicación
+            location = data.get("location")
+            if location is not None:
+                schedule.location = location
+
+            # Actualizar descripción
+            description = data.get("description")
+            if description is not None:
+                schedule.description = description
 
             db.session.commit()
+            print(f"DEBUG - Schedule actualizado correctamente: specificDate={schedule.specificDate}, dayOfWeek={schedule.dayOfWeek}")
+            
             return success_response(
                 msg="Horario actualizado correctamente",
                 data={"external_id": schedule.external_id},
@@ -347,28 +390,91 @@ class AttendanceController:
             return error_response(msg="Error interno", code=500, data={"error": str(e)})
 
     def get_history(
-        self, date_from=None, date_to=None, schedule_id=None, day_filter=None
+        self, date_from=None, date_to=None, schedule_id=None, day_filter=None,
+        search_dni=None, search_name=None, participant_id=None
     ):
-        # Historial de asistencias con filtros de fecha, sesión y día
+        # Historial de asistencias con filtros de fecha, sesión, día y búsqueda por participante
         try:
+            print(f"DEBUG - Filtros recibidos: date_from={date_from}, date_to={date_to}, schedule_id={schedule_id}, day_filter={day_filter}")
+            print(f"DEBUG - Búsqueda: dni={search_dni}, name={search_name}, participant_id={participant_id}")
+            
+            from sqlalchemy import func, or_
+            
             query = Attendance.query.join(Schedule).join(Participant)
+            
+            # Filtro por DNI del participante (búsqueda exacta o parcial)
+            if search_dni:
+                query = query.filter(Participant.dni.ilike(f"%{search_dni}%"))
+                print(f"DEBUG - Aplicando filtro DNI: {search_dni}")
+            
+            # Filtro por nombre del participante (búsqueda parcial en nombre y apellido)
+            if search_name:
+                search_term = f"%{search_name}%"
+                query = query.filter(
+                    or_(
+                        Participant.firstName.ilike(search_term),
+                        Participant.lastName.ilike(search_term),
+                        func.concat(Participant.firstName, ' ', Participant.lastName).ilike(search_term)
+                    )
+                )
+                print(f"DEBUG - Aplicando filtro nombre: {search_name}")
+            
+            # Filtro por ID del participante (para ver historial individual)
+            if participant_id:
+                participant = Participant.query.filter_by(external_id=participant_id).first()
+                if participant:
+                    query = query.filter(Attendance.participant_id == participant.id)
+                    print(f"DEBUG - Aplicando filtro participant_id: {participant_id}")
 
             if date_from:
                 query = query.filter(Attendance.date >= date_from)
+                print(f"DEBUG - Aplicando filtro date_from: {date_from}")
+                
             if date_to:
                 query = query.filter(Attendance.date <= date_to)
+                print(f"DEBUG - Aplicando filtro date_to: {date_to}")
 
             if schedule_id:
                 schedule = Schedule.query.filter_by(external_id=schedule_id).first()
                 if schedule:
                     query = query.filter(Attendance.schedule_id == schedule.id)
+                    print(f"DEBUG - Aplicando filtro schedule_id: {schedule_id}")
 
             if day_filter:
-                query = query.filter(Schedule.dayOfWeek == day_filter)
+                print(f"DEBUG - Aplicando filtro day_of_week: '{day_filter}'")
+                # Convertir a mayúsculas para comparación case-insensitive
+                day_filter_upper = day_filter.upper()
+                print(f"DEBUG - day_filter convertido a mayúsculas: '{day_filter_upper}'")
+                
+                # Mapear nombre del día a número de día de la semana (PostgreSQL: 0=Sunday, 1=Monday, etc.)
+                day_mapping = {
+                    'DOMINGO': 0,
+                    'LUNES': 1,
+                    'MARTES': 2,
+                    'MIERCOLES': 3,
+                    'MIÉRCOLES': 3,
+                    'JUEVES': 4,
+                    'VIERNES': 5,
+                    'SABADO': 6,
+                    'SÁBADO': 6
+                }
+                
+                day_number = day_mapping.get(day_filter_upper)
+                print(f"DEBUG - Día mapeado a número: {day_number}")
+                
+                if day_number is not None:
+                    from sqlalchemy import func, cast, Date
+                    # Filtrar por el día de la semana de la fecha de asistencia
+                    # En PostgreSQL, EXTRACT(DOW FROM date) devuelve 0=Sunday, 1=Monday, etc.
+                    query = query.filter(func.extract('dow', cast(Attendance.date, Date)) == day_number)
+                    print(f"DEBUG - Filtrando asistencias del día {day_filter_upper} (dow={day_number})")
 
             attendances = query.order_by(Attendance.date.desc()).all()
+            print(f"DEBUG - Total asistencias encontradas después de filtros: {len(attendances)}")
+            
             result = []
             for a in attendances:
+                print(f"DEBUG - Procesando asistencia: fecha={a.date}, sesión='{a.schedule.name}', día='{a.schedule.dayOfWeek}'")
                 result.append(
                     {
                         "external_id": a.external_id,
@@ -383,13 +489,17 @@ class AttendanceController:
                         "schedule": {
                             "external_id": a.schedule.external_id,
                             "name": a.schedule.name,
-                            "day_of_week": a.schedule.dayOfWeek,
+                            "day_of_week": a.schedule.dayOfWeek or "",
                             "start_time": a.schedule.startTime,
                             "end_time": a.schedule.endTime,
                             "program": a.schedule.program,
+                            "location": a.schedule.location or "",
+                            "description": a.schedule.description or "",
                         },
                     }
                 )
+            
+            print(f"DEBUG - Resultado final: {len(result)} asistencias")
             return success_response(msg="Historial obtenido correctamente", data=result)
         except Exception as e:
             return error_response(msg="Error interno", code=500, data={"error": str(e)})
