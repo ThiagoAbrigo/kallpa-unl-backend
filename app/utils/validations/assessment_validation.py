@@ -36,13 +36,13 @@ def validate_ranges(weight, height, waist, arm, leg, calf):
     if waist is not None and not 0 <= waist <= 200:
         errors["waistPerimeter"] = "Debe estar entre 0 y 200 cm"
 
-    if arm is not None and not 0 <= arm <= 80:
+    if arm is not None and not 10 <= arm <= 80:
         errors["armPerimeter"] = "Debe estar entre 10 y 80 cm"
 
-    if leg is not None and not 0 <= leg <= 120:
+    if leg is not None and not 20 <= leg <= 120:
         errors["legPerimeter"] = "Debe estar entre 20 y 120 cm"
 
-    if calf is not None and not 0 <= calf <= 70:
+    if calf is not None and not 15 <= calf <= 70:
         errors["calfPerimeter"] = "Debe estar entre 15 y 70 cm"
 
     return errors

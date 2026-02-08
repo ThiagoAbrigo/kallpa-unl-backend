@@ -78,7 +78,7 @@ class TestAssessmentController(unittest.TestCase):
         self.assertEqual(result["status"], "error")
         # self.assertIn("participant_external_id", result["errors"])
         self.assertIn("weight", result["errors"])
-        self.assertIn("height", result["errors"])
+        # height: 1.76 es válido (dentro del rango 0.3-2.5), no debe dar error
         self.assertIn("armPerimeter", result["errors"])
         self.assertIn("legPerimeter", result["errors"])
         self.assertIn("date", result["errors"])

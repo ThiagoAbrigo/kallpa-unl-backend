@@ -2,14 +2,21 @@ import unittest
 from unittest.mock import patch, MagicMock
 from app.controllers.usercontroller import UserController
 from app.controllers.auth_controller import AuthController
+from app import create_app, db
 
 class TestUserController(unittest.TestCase):
-  
-    
 
     def setUp(self):
-        # Instanciamos los controladores dentro de cada test 
-        pass
+        # Configurar contexto de aplicación Flask
+        self.app = create_app()
+        self.app.config["TESTING"] = True
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+
+    def tearDown(self):
+        # Limpiar el contexto
+        if hasattr(self, 'app_context'):
+            self.app_context.pop()
 
 
     @patch("app.controllers.auth_controller.AuthService")
@@ -37,18 +44,25 @@ class TestUserController(unittest.TestCase):
     # ========== PARTICIPANT TESTS ==========
 
     @patch("app.controllers.usercontroller.UserController._get_token")
+    @patch("app.controllers.usercontroller.User")
     @patch("app.controllers.usercontroller.Participant")
+    @patch("app.controllers.usercontroller.Responsible")
     @patch("app.controllers.usercontroller.db.session")
     @patch("app.controllers.usercontroller.java_sync")
-    def test_tc_05_register_participant_success(self, mock_java_sync, mock_session, mock_participant, mock_get_token):
+    def test_tc_05_register_participant_success(self, mock_java_sync, mock_session, mock_responsible, mock_participant, mock_user, mock_get_token):
         """TC-05: Registrar Participante - Verifica registro exitoso de adulto funcional"""
         mock_get_token.return_value = "Bearer mock_token"
-        mock_participant.query.filter_by.return_value.first.return_value = None 
-        mock_java_sync.search_by_identification.return_value = {"found": False}
         
+        # Crear fake_participant primero
         fake_participant = MagicMock()
         fake_participant.external_id = "uuid-ext-id"
         mock_participant.return_value = fake_participant
+        
+        # Mock para queries de validación de duplicados 
+        mock_participant.query.filter_by.return_value.first.side_effect = [None, None, fake_participant]  # No existe, no existe, luego existe después del commit
+        mock_responsible.query.filter_by.return_value.first.return_value = None
+        mock_user.query.filter_by.return_value.first.return_value = None
+        mock_java_sync.search_by_identification.return_value = {"found": False}
         
         data = {
             "firstName": "Juan",
@@ -109,15 +123,31 @@ class TestUserController(unittest.TestCase):
         self.assertIn("msg", response) 
 
     @patch("app.controllers.usercontroller.UserController._get_token")
+    @patch("app.controllers.usercontroller.User")
     @patch("app.controllers.usercontroller.Participant")
     @patch("app.controllers.usercontroller.Responsible")
     @patch("app.controllers.usercontroller.db.session")
     @patch("app.controllers.usercontroller.java_sync")
-    def test_tc_08_register_minor_initiation(self, mock_java_sync, mock_session, mock_responsible, mock_participant, mock_get_token):
+    def test_tc_08_register_minor_initiation(self, mock_java_sync, mock_session, mock_responsible, mock_participant, mock_user, mock_get_token):
         """TC-08: Registrar Menor - Verifica registro de menor con responsable"""
         mock_get_token.return_value = "Bearer mock_token"
-        mock_participant.query.filter_by.return_value.first.return_value = None
+        
+        # Crear fake objects primero
+        fake_participant = MagicMock()
+        fake_participant.external_id = "uuid-ext-id"
+        mock_participant.return_value = fake_participant
+        
+        fake_responsible = MagicMock()
+        fake_responsible.external_id = "uuid-resp-id"
+        mock_responsible.return_value = fake_responsible
+        
+        # Configurar queries de validación de duplicados
+        query_mock = MagicMock()
+        query_mock.first.side_effect = [None, None, None, fake_participant]  # DNI, email, responsable DNI, luego participant fresh
+        mock_participant.query.filter_by.return_value = query_mock
+        
         mock_responsible.query.filter_by.return_value.first.return_value = None
+        mock_user.query.filter_by.return_value.first.return_value = None
         mock_java_sync.search_by_identification.return_value = {"found": False}
         
         payload = {

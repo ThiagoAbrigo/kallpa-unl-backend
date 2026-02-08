@@ -37,8 +37,29 @@ class TestDBHealth(BaseTestCase):
     def test_save_assessment_ok(self):
         token = self._login_and_get_token()
 
+        # Primero crear un participante para usar su external_id
+        participant_payload = {
+            "firstName": "Juan",
+            "lastName": "Pérez",
+            "dni": "1150000001",
+            "age": 25,
+            "program": "FUNCIONAL",
+            "type": "ESTUDIANTE",
+            "phone": "0991234567",
+            "email": "juan.test@test.com",
+            "address": "Calle Test 123"
+        }
+        
+        participant_resp = self.client.post(
+            "/api/save-participants",
+            json=participant_payload,
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        
+        participant_external_id = participant_resp.get_json()["data"]["participant_external_id"]
+
         payload = {
-            "participant_external_id": "d37dfbf2-702b-4c8b-8a0b-45ee1174b57c",
+            "participant_external_id": participant_external_id,
             "weight": 70,
             "height": 1.70,
             "date": "2026-01-31",
@@ -108,8 +129,26 @@ class TestDBHealth(BaseTestCase):
     def test_update_test_ok(self):
         token = self._login_and_get_token()
 
+        # Primero crear un test para usar su external_id
+        create_payload = {
+            "name": "Test para actualizar",
+            "frequency_months": 3,
+            "description": "Descripción inicial",
+            "exercises": [
+                {"name": "Flexiones", "unit": "repeticiones"}
+            ]
+        }
+        
+        create_resp = self.client.post(
+            "/api/save-test",
+            json=create_payload,
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        
+        test_external_id = create_resp.get_json()["data"]["test_external_id"]
+
         payload = {
-            "external_id": "095a91a1-4da8-434f-8c92-a32f703defde",
+            "external_id": test_external_id,
             "name": "test fuerza actualizado",
             "frequency_months": 4,
             "description": "Actualizado",
@@ -132,7 +171,23 @@ class TestDBHealth(BaseTestCase):
     def test_delete_test_ok(self):
         token = self._login_and_get_token()
 
-        test_external_id = "78740c69-c0de-41af-a40a-3efb26cf0150"
+        # Primero crear un test para eliminar
+        create_payload = {
+            "name": "Test para eliminar",
+            "frequency_months": 3,
+            "description": "Descripción test",
+            "exercises": [
+                {"name": "Ejercicio test", "unit": "repeticiones"}
+            ]
+        }
+        
+        create_resp = self.client.post(
+            "/api/save-test",
+            json=create_payload,
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        
+        test_external_id = create_resp.get_json()["data"]["test_external_id"]
 
         response = self.client.delete(
             f"/api/delete-test/{test_external_id}",
