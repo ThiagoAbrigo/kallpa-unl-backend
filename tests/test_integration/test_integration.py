@@ -3,6 +3,7 @@ from tests.test_integration.base_test import BaseTestCase
 
 
 class TestDBHealth(BaseTestCase):
+    #python -m unittest tests.test_integration.test_integration
 
     def test_db_connection_ok(self):
         response = self.client.get("/api/health/db")
@@ -38,7 +39,7 @@ class TestDBHealth(BaseTestCase):
         token = self._login_and_get_token()
 
         payload = {
-            "participant_external_id": "d37dfbf2-702b-4c8b-8a0b-45ee1174b57c",
+            "participant_external_id": "93bc799d-25ef-45dc-bc5e-3969c79378b2",
             "weight": 70,
             "height": 1.70,
             "date": "2026-01-31",
@@ -109,7 +110,7 @@ class TestDBHealth(BaseTestCase):
         token = self._login_and_get_token()
 
         payload = {
-            "external_id": "095a91a1-4da8-434f-8c92-a32f703defde",
+            "external_id": "cf9d469f-1ff4-4391-9a70-7d4a4c06eb26",
             "name": "test fuerza actualizado",
             "frequency_months": 4,
             "description": "Actualizado",
@@ -132,7 +133,7 @@ class TestDBHealth(BaseTestCase):
     def test_delete_test_ok(self):
         token = self._login_and_get_token()
 
-        test_external_id = "78740c69-c0de-41af-a40a-3efb26cf0150"
+        test_external_id = "cf9d469f-1ff4-4391-9a70-7d4a4c06eb26"
 
         response = self.client.delete(
             f"/api/delete-test/{test_external_id}",
@@ -143,28 +144,3 @@ class TestDBHealth(BaseTestCase):
 
         data = response.get_json()
         self.assertEqual(data["status"], "ok")
-
-    # def test_apply_test_ok(self):
-    #     token = self._login_and_get_token()
-
-    #     payload = {
-    #         "participant_external_id": "d37dfbf2-702b-4c8b-8a0b-45ee1174b57c",
-    #         "test_external_id": "2131bd20-abc0-4aa8-8881-14c325bd3959",
-    #         "date": "2026-01-31",
-    #         "general_observations": "Buen desempeño",
-    #         "results": [
-    #             {"exercise_external_id": "f622e13b-cd9c-4f11-9dd8-690c7d324e3e", "value": 20},
-    #             {"exercise_external_id": "48993c8f-1184-4c6f-a5a4-15fbc300b60d", "value": 15}
-    #         ]
-    #     }
-
-    #     response = self.client.post(
-    #         "/api/apply_test",
-    #         json=payload,
-    #         headers={"Authorization": f"Bearer {token}"}
-    #     )
-
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(response.get_json()["status"], "ok")
-
-
