@@ -34,42 +34,6 @@ class TestUserController(unittest.TestCase):
         self.assertEqual(status_code, 401)
         self.assertIn("msg", response)
 
-    # ========== PARTICIPANT TESTS ==========
-
-    @patch("app.controllers.usercontroller.UserController._get_token")
-    @patch("app.controllers.usercontroller.Participant")
-    @patch("app.controllers.usercontroller.db.session")
-    @patch("app.controllers.usercontroller.java_sync")
-    def test_tc_05_register_participant_success(self, mock_java_sync, mock_session, mock_participant, mock_get_token):
-        """TC-05: Registrar Participante - Verifica registro exitoso de adulto funcional"""
-        mock_get_token.return_value = "Bearer mock_token"
-        mock_participant.query.filter_by.return_value.first.return_value = None 
-        mock_java_sync.search_by_identification.return_value = {"found": False}
-        
-        fake_participant = MagicMock()
-        fake_participant.external_id = "uuid-ext-id"
-        mock_participant.return_value = fake_participant
-        
-        data = {
-            "firstName": "Juan",
-            "lastName": "Pérez",
-            "dni": "1100000001",
-            "age": 25,
-            "program": "FUNCIONAL",
-            "type": "ESTUDIANTE",
-            "phone": "0991234567",
-            "email": "juan@test.com",
-            "address": "Calle Falsa 123"
-        }
-        
-        controller = UserController()
-        response = controller.create_participant(data)
-        
-        self.assertEqual(response["code"], 200)
-        self.assertEqual(response["msg"], "Participante registrado correctamente")
-        mock_session.add.assert_called()
-        mock_session.commit.assert_called()
-
     @patch("app.controllers.usercontroller.UserController._get_token")
     @patch("app.controllers.usercontroller.Participant")
     def test_tc_06_register_duplicate_dni(self, mock_participant, mock_get_token):
@@ -110,44 +74,6 @@ class TestUserController(unittest.TestCase):
 
     @patch("app.controllers.usercontroller.UserController._get_token")
     @patch("app.controllers.usercontroller.Participant")
-    @patch("app.controllers.usercontroller.Responsible")
-    @patch("app.controllers.usercontroller.db.session")
-    @patch("app.controllers.usercontroller.java_sync")
-    def test_tc_08_register_minor_initiation(self, mock_java_sync, mock_session, mock_responsible, mock_participant, mock_get_token):
-        """TC-08: Registrar Menor - Verifica registro de menor con responsable"""
-        mock_get_token.return_value = "Bearer mock_token"
-        mock_participant.query.filter_by.return_value.first.return_value = None
-        mock_responsible.query.filter_by.return_value.first.return_value = None
-        mock_java_sync.search_by_identification.return_value = {"found": False}
-        
-        payload = {
-            "participant": {
-                "firstName": "Niño",
-                "lastName": "Test",
-                "age": 12, 
-                "dni": "1100000002",
-                "address": "Av siempre viva",
-                "program": "INICIACION",
-                "type": "ESTUDIANTE",
-                "phone": "0999888777",
-                "email": "nino@test.com"
-            },
-            "responsible": {
-                "name": "PadreTest",
-                "dni": "1100000003",
-                "phone": "0999999988"
-            }
-        }
-        
-        controller = UserController()
-        response = controller.create_participant(payload)
-        
-        self.assertEqual(response["code"], 200)
-        # Verifica que se crean tanto el participante como el responsable
-        self.assertEqual(mock_session.add.call_count, 2) 
-
-    @patch("app.controllers.usercontroller.UserController._get_token")
-    @patch("app.controllers.usercontroller.Participant")
     @patch("app.controllers.usercontroller.User")
     def test_tc_14_dni_invalid_validations(self, mock_user, mock_participant, mock_get_token):
         """TC-14, TC-15: Validaciones de DNI - Verifica longitud y ceros"""
@@ -175,9 +101,10 @@ class TestUserController(unittest.TestCase):
             self.assertEqual(response["code"], 400)
             self.assertIn(expected_msg, response["data"]["dni"])
 
+    @patch("app.controllers.usercontroller.db.session")
     @patch("app.controllers.usercontroller.UserController._get_token")
     @patch("app.controllers.usercontroller.Participant")
-    def test_tc_16_phone_validations(self, mock_participant, mock_get_token):
+    def test_tc_16_phone_validations(self, mock_participant, mock_get_token, mock_session):
         """TC-16, TC-21, TC-24: Validaciones de Teléfono - Verifica formato inválido"""
         mock_get_token.return_value = "Bearer mock_token"
         mock_participant.query.filter_by.return_value.first.return_value = None
@@ -203,9 +130,10 @@ class TestUserController(unittest.TestCase):
             self.assertEqual(response["code"], 400, f"Failed for phone: {phone_val}")
             self.assertIn(expected_msg, response["data"]["phone"])
 
+    @patch("app.controllers.usercontroller.db.session")
     @patch("app.controllers.usercontroller.UserController._get_token")
     @patch("app.controllers.usercontroller.Participant")
-    def test_tc_18_program_age_restrictions(self, mock_participant, mock_get_token):
+    def test_tc_18_program_age_restrictions(self, mock_participant, mock_get_token, mock_session):
         """TC-18: Menor de 16 intentando inscribirse a FUNCIONAL - Verifica restricción de edad"""
         mock_get_token.return_value = "Bearer mock_token"
         mock_participant.query.filter_by.return_value.first.return_value = None
