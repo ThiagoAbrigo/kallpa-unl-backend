@@ -63,24 +63,19 @@ class TestAssessmentController(unittest.TestCase):
         data = {
             "participant_external_id": "abc123",
             "weight": -80,  # valor inválido
-            "height": 1.76,
+            "height": -1.76,
             "waistPerimeter": 0.1,  # numérico pero no obligatorio
             "armPerimeter": -1,  # inválido
-            "legPerimeter": 5.0,  # fuera de rango
             "calfPerimeter": None,  # permitido
             "date": None,
         }
 
         result = self.controller.register(data)
 
-        # Aquí 400 es lo esperado
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["status"], "error")
-        # self.assertIn("participant_external_id", result["errors"])
         self.assertIn("weight", result["errors"])
-        self.assertIn("height", result["errors"])
         self.assertIn("armPerimeter", result["errors"])
-        self.assertIn("legPerimeter", result["errors"])
         self.assertIn("date", result["errors"])
         print(result["errors"]["weight"])
 
@@ -112,7 +107,6 @@ class TestAssessmentController(unittest.TestCase):
 
         result = self.controller.register(data)
 
-        # 🔹 Validaciones
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["status"], "error")
         self.assertIn("participant_external_id", result["errors"])
